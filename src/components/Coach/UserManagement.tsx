@@ -60,6 +60,12 @@ export default function UserManagement() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!user?.id) {
+      setMessage({ type: 'error', text: 'You must be logged in to send invitations' })
+      return
+    }
+
     setSending(true)
     setMessage(null)
 
@@ -69,7 +75,7 @@ export default function UserManagement() {
       const { data: inviterProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .maybeSingle()
 
       const { data: tokenData, error: insertError } = await supabase
@@ -77,7 +83,7 @@ export default function UserManagement() {
         .insert({
           email: inviteEmail,
           role: inviteRole,
-          invited_by: user?.id
+          invited_by: user.id
         })
         .select()
         .single()
@@ -184,6 +190,14 @@ export default function UserManagement() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-gray-600">Loading users...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-red-600">You must be logged in to manage users.</div>
       </div>
     )
   }

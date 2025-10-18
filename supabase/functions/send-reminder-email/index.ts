@@ -103,7 +103,7 @@ To change your notification settings, log in to the app and visit Settings.
 
     // Send email using Resend
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const FROM_EMAIL = "BDC Thrive <noreply@send.thrivewellbeing.me>";
+    const FROM_EMAIL = "Chris Cherry <ccherry@thrivewellbeing.me>";
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");

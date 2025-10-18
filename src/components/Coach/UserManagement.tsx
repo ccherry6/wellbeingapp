@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { UserPlus, Mail, Shield, Trash2, CheckCircle, XCircle, Users, Copy } from 'lucide-react'
-import { Bolt Database } from '../../lib/Bolt Database'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 
 interface UserProfile {
@@ -13,7 +13,7 @@ interface UserProfile {
   created_at: string
 }
 
-export function UserManagement() {
+export default function UserManagement() {
   const { user } = useAuth()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,8 +25,8 @@ export function UserManagement() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const REGISTRATION_CODE = 'BDC2026'
-  const Bolt Database_URL = import.meta.env.VITE_Bolt Database_URL
-  const Bolt Database_ANON_KEY = import.meta.env.VITE_Bolt Database_ANON_KEY
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -44,7 +44,7 @@ export function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await Bolt Database
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('id, email, full_name, role, student_id, sport, created_at')
         .order('created_at', { ascending: false })
@@ -66,13 +66,13 @@ export function UserManagement() {
     try {
       const inviteUrl = import.meta.env.VITE_APP_URL || window.location.origin
 
-      const { data: inviterProfile } = await Bolt Database
+      const { data: inviterProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', user?.id)
         .maybeSingle()
 
-      const { data: tokenData, error: insertError } = await Bolt Database
+      const { data: tokenData, error: insertError } = await supabase
         .from('invitation_tokens')
         .insert({
           email: inviteEmail,
@@ -100,12 +100,12 @@ export function UserManagement() {
       console.log('📧 Email payload:', emailPayload)
 
       const emailResponse = await fetch(
-        `${import.meta.env.VITE_Bolt Database_URL}/functions/v1/send-invitation-email`,
+        `${import.meta.env.VITE_supabase_URL}/functions/v1/send-invitation-email`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_Bolt Database_ANON_KEY}`,
+            'Authorization': `Bearer ${import.meta.env.VITE_supabase_ANON_KEY}`,
           },
           body: JSON.stringify(emailPayload)
         }
@@ -143,7 +143,7 @@ export function UserManagement() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await Bolt Database
+      const { error } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
         .eq('id', userId)
@@ -168,7 +168,7 @@ export function UserManagement() {
     try {
       const { error } = await supabase.auth.admin.deleteUser(userId)
 
-      if error) throw error
+      if (error) throw error
 
       setMessage({ type: 'success', text: 'User deleted successfully' })
       loadUsers()
@@ -313,16 +313,16 @@ export function UserManagement() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_Bolt Database_URL
+              VITE_supabase_URL
             </label>
             <div className="flex items-center gap-2">
               <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {Bolt Database_URL}
+                {supabase_URL}
               </code>
               <button
-                onClick={() => copyToClipboard(Bolt Database_URL, 'url')}
+                onClick={() => copyToClipboard(supabase_URL, 'url')}
                 className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
-                title="Copy Bolt Database URL"
+                title="Copy supabase URL"
               >
                 {copiedField === 'url' ? (
                   <CheckCircle className="w-5 h-5 text-green-600" />
@@ -335,16 +335,16 @@ export function UserManagement() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_Bolt Database_ANON_KEY
+              VITE_supabase_ANON_KEY
             </label>
             <div className="flex items-center gap-2">
               <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {Bolt Database_ANON_KEY}
+                {supabase_ANON_KEY}
               </code>
               <button
-                onClick={() => copyToClipboard(Bolt Database_ANON_KEY, 'key')}
+                onClick={() => copyToClipboard(supabase_ANON_KEY, 'key')}
                 className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
-                title="Copy Bolt Database Anon Key"
+                title="Copy supabase Anon Key"
               >
                 {copiedField === 'key' ? (
                   <CheckCircle className="w-5 h-5 text-green-600" />

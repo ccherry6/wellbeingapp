@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle } from 'lucide-react'
+import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle, Book, Target, Activity, BarChart2, UserPlus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { StudentOverview } from './StudentOverview'
 import { AnalyticsCharts } from './AnalyticsCharts'
@@ -7,6 +7,11 @@ import { QRGenerator } from './QRGenerator'
 import { AlertHistory } from './AlertHistory'
 import { StudentDeepDive } from './StudentDeepDive'
 import { ContactFollowUp } from './ContactFollowUp'
+import ResourceManagement from './ResourceManagement'
+import RiskScoring from './RiskScoring'
+import CorrelationAnalysis from './CorrelationAnalysis'
+import WeeklySummary from './WeeklySummary'
+import UserManagement from './UserManagement'
 import { BDCLogo } from '../BDCLogo'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -22,7 +27,7 @@ interface Student {
 
 export function CoachDashboard() {
   const [students, setStudents] = useState<Student[]>([])
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts'>('overview')
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users'>('overview')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -316,6 +321,76 @@ export function CoachDashboard() {
             <MessageCircle className="w-4 h-4 inline mr-2" />
             Contact Follow-up
           </button>
+          <button
+            onClick={() => {
+              setSelectedView('resources')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'resources'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Book className="w-4 h-4 inline mr-2" />
+            Resources
+          </button>
+          <button
+            onClick={() => {
+              setSelectedView('risk')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'risk'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Target className="w-4 h-4 inline mr-2" />
+            Risk Scoring
+          </button>
+          <button
+            onClick={() => {
+              setSelectedView('correlations')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'correlations'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Activity className="w-4 h-4 inline mr-2" />
+            Correlations
+          </button>
+          <button
+            onClick={() => {
+              setSelectedView('weekly')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'weekly'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <BarChart2 className="w-4 h-4 inline mr-2" />
+            Weekly Summary
+          </button>
+          <button
+            onClick={() => {
+              setSelectedView('users')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'users'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <UserPlus className="w-4 h-4 inline mr-2" />
+            User Management
+          </button>
         </div>
 
         {selectedView === 'overview' && (
@@ -331,6 +406,11 @@ export function CoachDashboard() {
         {selectedView === 'alerts' && <AlertHistory />}
         {selectedView === 'qr' && <QRGenerator />}
         {selectedView === 'contacts' && <ContactFollowUp />}
+        {selectedView === 'resources' && <ResourceManagement />}
+        {selectedView === 'risk' && <RiskScoring />}
+        {selectedView === 'correlations' && <CorrelationAnalysis />}
+        {selectedView === 'weekly' && <WeeklySummary />}
+        {selectedView === 'users' && <UserManagement />}
         {selectedView === 'deepdive' && selectedStudentId && (
           <StudentDeepDive
             studentId={selectedStudentId}

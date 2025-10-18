@@ -327,14 +327,14 @@ export default function UserManagement() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_supabase_URL
+              VITE_SUPABASE_URL
             </label>
             <div className="flex items-center gap-2">
               <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {supabase_URL}
+                {SUPABASE_URL}
               </code>
               <button
-                onClick={() => copyToClipboard(supabase_URL, 'url')}
+                onClick={() => copyToClipboard(SUPABASE_URL, 'url')}
                 className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
                 title="Copy supabase URL"
               >

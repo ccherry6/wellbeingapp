@@ -103,7 +103,7 @@ To change your notification settings, log in to the app and visit Settings.
 
     // Send email using Resend
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "BDC Thrive <noreply@send.thrivewellbeing.me>";
+    const FROM_EMAIL = "BDC Thrive <noreply@send.thrivewellbeing.me>";
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");
@@ -122,7 +122,6 @@ To change your notification settings, log in to the app and visit Settings.
     console.log("Sending reminder email to:", studentEmail);
     console.log("Subject:", subject);
     console.log("Reminder time:", reminderTime);
-    console.log("From email:", FROM_EMAIL);
 
     try {
       const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -145,19 +144,17 @@ To change your notification settings, log in to the app and visit Settings.
       if (!emailResponse.ok) {
         console.error("Resend API error:", emailData);
         console.error("Response status:", emailResponse.status);
-        console.error("FROM_EMAIL used:", FROM_EMAIL);
 
         let errorMessage = "Failed to send email via Resend";
         if (emailResponse.status === 403) {
-          errorMessage = "Email domain not verified in Resend. Please verify your FROM_EMAIL domain in your Resend account.";
+          errorMessage = "Email domain not verified in Resend. Please verify your domain in your Resend account.";
         }
 
         return new Response(
           JSON.stringify({
             error: errorMessage,
             details: emailData,
-            status: emailResponse.status,
-            fromEmail: FROM_EMAIL
+            status: emailResponse.status
           }),
           {
             status: emailResponse.status,

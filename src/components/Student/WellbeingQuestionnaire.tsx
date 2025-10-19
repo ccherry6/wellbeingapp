@@ -104,6 +104,7 @@ interface WellbeingQuestionnaireProps {
 
 export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProps) {
   const { user } = useAuth()
+  const [profile, setProfile] = useState<any>(null)
   const [responses, setResponses] = useState<Record<string, number>>({
     sleep_quality: 5,
     sleep_hours: 8,
@@ -129,6 +130,28 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
   const [error, setError] = useState<string | null>(null)
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
   const [checkingSubmission, setCheckingSubmission] = useState(true)
+
+  React.useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return
+
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (data) {
+          setProfile(data)
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err)
+      }
+    }
+
+    fetchUserProfile()
+  }, [user])
 
   React.useEffect(() => {
     const checkTodaySubmission = async () => {
@@ -346,7 +369,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
               studentEmail: user.email || 'No email',
               studentId: profile?.student_id || 'N/A',
               sport: profile?.sport || 'N/A',
-              entryDate: selectedDate,
+              entryDate: new Date().toISOString().split('T')[0],
               alerts: alertMessages,
               notes: notes || null,
               injurySicknessNotes: isInjuredOrSick ? injurySicknessNotes : null

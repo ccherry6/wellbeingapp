@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, AlertTriangle, TrendingDown, TrendingUp, Target } from 'lucide-react'
+import { User, AlertTriangle, TrendingDown, TrendingUp, Target, Edit2, Check, X } from 'lucide-react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { format, subDays } from 'date-fns'
@@ -29,6 +29,8 @@ export function StudentOverview({ students, onStudentClick }: StudentOverviewPro
   const [studentData, setStudentData] = useState<StudentData[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [editingSport, setEditingSport] = useState<string | null>(null)
+  const [sportValue, setSportValue] = useState('')
 
   useEffect(() => {
     if (students.length > 0) {
@@ -140,6 +142,38 @@ export function StudentOverview({ students, onStudentClick }: StudentOverviewPro
     }
   }
 
+  const handleEditSport = (studentId: string, currentSport: string) => {
+    setEditingSport(studentId)
+    setSportValue(currentSport)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingSport(null)
+    setSportValue('')
+  }
+
+  const handleSaveSport = async (studentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ sport: sportValue })
+        .eq('id', studentId)
+
+      if (error) throw error
+
+      // Update local state
+      setStudentData(prev => prev.map(s =>
+        s.id === studentId ? { ...s, sport: sportValue } : s
+      ))
+
+      setEditingSport(null)
+      setSportValue('')
+    } catch (error) {
+      console.error('Error updating sport:', error)
+      alert('Failed to update sport. Please try again.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -184,9 +218,50 @@ export function StudentOverview({ students, onStudentClick }: StudentOverviewPro
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{student.full_name}</h3>
-                  <p className="text-sm text-gray-600">
-                    {student.student_id} • {student.sport} • {student.program_year}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm text-gray-600">
+                      {student.student_id} •
+                    </p>
+                    {editingSport === student.id ? (
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="text"
+                          value={sportValue}
+                          onChange={(e) => setSportValue(e.target.value)}
+                          className="text-sm border border-blue-300 rounded px-2 py-0.5 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleSaveSport(student.id)}
+                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                          title="Save"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          title="Cancel"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm text-gray-600">{student.sport}</span>
+                        <button
+                          onClick={() => handleEditSport(student.id, student.sport)}
+                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                          title="Edit sport"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-600">
+                      • {student.program_year}
+                    </p>
+                  </div>
                 </div>
               </div>
 

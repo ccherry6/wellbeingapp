@@ -48,8 +48,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const COACH_EMAIL = "ccherry@thrivewellbeing.me";
-    const FROM_EMAIL = "Chris Cherry <ccherry@thrivewellbeing.me>";
+    const COACH_EMAIL = "ccherry@bdc.nsw.edu.au";
+    const FROM_EMAIL = "BDC Wellbeing <ccherry@bdc.nsw.edu.au>";
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");

@@ -134,8 +134,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
     const checkTodaySubmission = async () => {
       if (!user) return
 
-      // Use exact date: 2025-10-05 for Sunday, October 5th, 2025
-      const today = '2025-10-05'
+      const today = new Date().toISOString().split('T')[0]
 
       try {
         const { data, error } = await supabase
@@ -255,7 +254,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
     // Prepare the data to insert
     const entryData: any = {
       user_id: user.id,
-      entry_date: '2025-10-05', // Sunday, October 5th, 2025
+      entry_date: new Date().toISOString().split('T')[0],
       ...responses,
       notes: notes.trim() || null,
       wants_to_speak: wantsToSpeak
@@ -399,11 +398,11 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
       setSpeakToWho('')
       setSpeakToEmail('')
       setShowStaffDropdown(false)
-      
+
       // Mark as completed for today in localStorage for notifications
-      const today = '2025-10-05'
+      const today = new Date().toISOString().split('T')[0]
       localStorage.setItem(`completed_${user.id}_${today}`, 'true')
-      
+
       onSuccess?.()
     } catch (error) {
       console.error('❌ SUBMISSION FAILED:', error)

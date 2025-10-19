@@ -61,8 +61,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
     let longest = 0
     let temp = 0
 
-    // Current date: Sunday, October 5th, 2025
-    const today = new Date('2025-10-05')
+    const today = new Date()
     today.setHours(0, 0, 0, 0)
 
     for (let i = 0; i < uniqueDates.length; i++) {
@@ -99,8 +98,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
   }
 
   const calculateMonthlyCheckIns = (data: WellnessEntry[]) => {
-    // Current date: Sunday, October 5th, 2025
-    const now = new Date('2025-10-05')
+    const now = new Date()
     const monthStart = startOfMonth(now)
     const monthEnd = endOfMonth(now)
 
@@ -121,8 +119,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
   }
 
   const getCompletionRate = () => {
-    // Current date: Sunday, October 5th, 2025
-    const now = new Date('2025-10-05')
+    const now = new Date()
     const daysInMonth = endOfMonth(now).getDate()
     const dayOfMonth = now.getDate()
 
@@ -132,8 +129,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
   }
 
   const getMonthlyCalendar = () => {
-    // Current date: Sunday, October 5th, 2025
-    const now = new Date('2025-10-05')
+    const now = new Date()
     const monthStart = startOfMonth(now)
     const monthEnd = endOfMonth(now)
 
@@ -151,7 +147,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
     const calendarDays = days.map(day => ({
       date: day,
       hasEntry: entryDates.has(format(day, 'yyyy-MM-dd')),
-      isToday: format(day, 'yyyy-MM-dd') === '2025-10-05',
+      isToday: format(day, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd'),
       isFuture: day > now
     }))
 
@@ -256,7 +252,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 flex items-center">
             <Calendar className="w-5 h-5 mr-2" />
-            {format(new Date('2025-10-05'), 'MMMM yyyy')}
+            {format(new Date(), 'MMMM yyyy')}
           </h3>
           <div className="text-right">
             <p className="text-sm text-gray-600">Completion Rate</p>

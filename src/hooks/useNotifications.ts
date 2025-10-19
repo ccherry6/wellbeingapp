@@ -168,7 +168,7 @@ export function useNotifications() {
 
     try {
       // Check if user has already completed today's questionnaire
-      const today = '2025-10-05' // Current date
+      const today = new Date().toISOString().split('T')[0]
 
       // Check database for today's entry
       const { data, error } = await supabase

@@ -221,6 +221,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      coach_invitations: {
+        Row: {
+          id: string
+          invited_by: string
+          invited_email: string
+          invited_user_id: string | null
+          status: 'pending' | 'accepted' | 'revoked'
+          created_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          invited_by: string
+          invited_email: string
+          invited_user_id?: string | null
+          status?: 'pending' | 'accepted' | 'revoked'
+          created_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          invited_by?: string
+          invited_email?: string
+          invited_user_id?: string | null
+          status?: 'pending' | 'accepted' | 'revoked'
+          created_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+        }
+      }
     }
   }
 }

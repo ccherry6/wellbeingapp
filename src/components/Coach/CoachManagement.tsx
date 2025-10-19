@@ -207,7 +207,7 @@ export default function CoachManagement() {
           <button
             type="submit"
             disabled={sending || !newEmail}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <Mail className="w-4 h-4" />
             {sending ? 'Sending...' : 'Send Invitation'}
@@ -277,7 +277,7 @@ export default function CoachManagement() {
                       {invitation.status !== 'revoked' && (
                         <button
                           onClick={() => revokeAccess(invitation.id, invitation.invited_email)}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
                         >
                           <UserMinus className="w-4 h-4" />
                           Revoke Access

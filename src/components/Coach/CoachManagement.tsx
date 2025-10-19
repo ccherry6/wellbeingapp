@@ -27,17 +27,31 @@ export default function CoachManagement() {
       setLoading(true);
       const { data, error } = await supabase
         .from('coach_invitations')
-        .select(`
-          *,
-          invited_user_profile:user_profiles!coach_invitations_invited_user_id_fkey(
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInvitations(data || []);
+
+      // Fetch user profiles separately for accepted invitations
+      const invitationsWithProfiles = await Promise.all(
+        (data || []).map(async (invitation) => {
+          if (invitation.invited_user_id) {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('full_name, email')
+              .eq('id', invitation.invited_user_id)
+              .maybeSingle();
+
+            return {
+              ...invitation,
+              invited_user_profile: profile
+            };
+          }
+          return invitation;
+        })
+      );
+
+      setInvitations(invitationsWithProfiles);
     } catch (err) {
       console.error('Error fetching invitations:', err);
       setError('Failed to load coach invitations');

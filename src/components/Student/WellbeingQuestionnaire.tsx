@@ -303,7 +303,67 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
       }
       
       console.log('✅ WELLNESS ENTRY SAVED SUCCESSFULLY')
-      
+
+      // Check for low metrics and send alert
+      const alertMessages: string[] = []
+      if (responses.sleep_quality <= 3) {
+        alertMessages.push(`Sleep Quality: ${responses.sleep_quality}/10 (Critical)`)
+      }
+      if (responses.sleep_hours <= 5) {
+        alertMessages.push(`Sleep Hours: ${responses.sleep_hours} hours (Critical)`)
+      }
+      if (responses.energy_level <= 3) {
+        alertMessages.push(`Energy Level: ${responses.energy_level}/10 (Critical)`)
+      }
+      if (responses.mood <= 3) {
+        alertMessages.push(`Mood: ${responses.mood}/10 (Critical)`)
+      }
+      if (responses.relationship_satisfaction <= 3) {
+        alertMessages.push(`Relationship Satisfaction: ${responses.relationship_satisfaction}/10 (Critical)`)
+      }
+      if (responses.program_belonging <= 3) {
+        alertMessages.push(`Program Belonging: ${responses.program_belonging}/10 (Critical)`)
+      }
+      if (responses.stress_level >= 8) {
+        alertMessages.push(`Stress Level: ${responses.stress_level}/10 (High)`)
+      }
+      if (responses.academic_pressure >= 8) {
+        alertMessages.push(`Academic Pressure: ${responses.academic_pressure}/10 (High)`)
+      }
+      if (responses.training_fatigue >= 8) {
+        alertMessages.push(`Training Fatigue: ${responses.training_fatigue}/10 (High)`)
+      }
+      if (isInjuredOrSick) {
+        alertMessages.push('Student is injured or sick')
+      }
+
+      // Send alert email if there are critical metrics
+      if (alertMessages.length > 0) {
+        try {
+          console.log('🚨 SENDING LOW METRIC ALERT...')
+          const { error: alertError } = await supabase.functions.invoke('send-low-metric-alert', {
+            body: {
+              studentName: profile?.full_name || user.email || 'Unknown Student',
+              studentEmail: user.email || 'No email',
+              studentId: profile?.student_id || 'N/A',
+              sport: profile?.sport || 'N/A',
+              entryDate: selectedDate,
+              alerts: alertMessages,
+              notes: notes || null,
+              injurySicknessNotes: isInjuredOrSick ? injurySicknessNotes : null
+            }
+          })
+
+          if (alertError) {
+            console.warn('⚠️ ALERT EMAIL FAILED (NON-CRITICAL):', alertError)
+          } else {
+            console.log('✅ ALERT EMAIL SENT SUCCESSFULLY')
+          }
+        } catch (alertError) {
+          console.warn('⚠️ ALERT EMAIL EXCEPTION (NON-CRITICAL):', alertError)
+        }
+      }
+
       // If they want to speak to someone and provided an email, send notification
       if (wantsToSpeak && speakToEmail.trim() && speakToWho.trim()) {
         try {

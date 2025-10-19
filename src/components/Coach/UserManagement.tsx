@@ -349,14 +349,14 @@ export default function UserManagement() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_supabase_ANON_KEY
+              VITE_SUPABASE_ANON_KEY
             </label>
             <div className="flex items-center gap-2">
               <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {supabase_ANON_KEY}
+                {SUPABASE_ANON_KEY}
               </code>
               <button
-                onClick={() => copyToClipboard(supabase_ANON_KEY, 'key')}
+                onClick={() => copyToClipboard(SUPABASE_ANON_KEY, 'key')}
                 className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
                 title="Copy supabase Anon Key"
               >

@@ -42,8 +42,13 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
   const [entries, setEntries] = useState<WellnessEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMetric, setSelectedMetric] = useState<string>('all')
-  const [editingSport, setEditingSport] = useState(false)
-  const [sportValue, setSportValue] = useState('')
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    student_id: '',
+    sport: '',
+    program_year: ''
+  })
 
   useEffect(() => {
     fetchStudentData()
@@ -78,31 +83,57 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
     }
   }
 
-  const handleEditSport = () => {
-    setEditingSport(true)
-    setSportValue(student?.sport || '')
+  const handleEditProfile = () => {
+    setEditingProfile(true)
+    setEditForm({
+      full_name: student?.full_name || '',
+      student_id: student?.student_id || '',
+      sport: student?.sport || '',
+      program_year: student?.program_year?.toString() || ''
+    })
   }
 
   const handleCancelEdit = () => {
-    setEditingSport(false)
-    setSportValue('')
+    setEditingProfile(false)
+    setEditForm({
+      full_name: '',
+      student_id: '',
+      sport: '',
+      program_year: ''
+    })
   }
 
-  const handleSaveSport = async () => {
+  const handleSaveProfile = async () => {
     try {
+      const updateData: any = {
+        full_name: editForm.full_name,
+        student_id: editForm.student_id,
+        sport: editForm.sport
+      }
+
+      if (editForm.program_year) {
+        updateData.program_year = parseInt(editForm.program_year)
+      }
+
       const { error } = await supabase
         .from('user_profiles')
-        .update({ sport: sportValue })
+        .update(updateData)
         .eq('id', studentId)
 
       if (error) throw error
 
-      setStudent(prev => prev ? { ...prev, sport: sportValue } : null)
-      setEditingSport(false)
-      setSportValue('')
+      setStudent(prev => prev ? {
+        ...prev,
+        full_name: editForm.full_name,
+        student_id: editForm.student_id,
+        sport: editForm.sport,
+        program_year: editForm.program_year ? parseInt(editForm.program_year) : prev.program_year
+      } : null)
+
+      setEditingProfile(false)
     } catch (error) {
-      console.error('Error updating sport:', error)
-      alert('Failed to update sport. Please try again.')
+      console.error('Error updating profile:', error)
+      alert('Failed to update profile. Please try again.')
     }
   }
 
@@ -213,56 +244,92 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
 
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-xl p-8">
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{student.full_name}</h1>
-            <div className="flex items-center space-x-4 text-blue-100">
-              <span>ID: {student.student_id || 'N/A'}</span>
-              <span>•</span>
-              {editingSport ? (
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={sportValue}
-                    onChange={(e) => setSportValue(e.target.value)}
-                    className="text-sm border border-blue-300 rounded px-2 py-1 w-40 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSaveSport}
-                    className="p-1 text-green-400 hover:bg-blue-800 rounded"
-                    title="Save"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="p-1 text-red-400 hover:bg-blue-800 rounded"
-                    title="Cancel"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+          {editingProfile ? (
+            <div className="flex-1">
+              <div className="bg-white rounded-lg p-6 text-gray-900 max-w-2xl">
+                <h2 className="text-xl font-bold mb-4">Edit Student Profile</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Student ID</label>
+                    <input
+                      type="text"
+                      value={editForm.student_id}
+                      onChange={(e) => setEditForm({ ...editForm, student_id: e.target.value })}
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Sport</label>
+                    <input
+                      type="text"
+                      value={editForm.sport}
+                      onChange={(e) => setEditForm({ ...editForm, sport: e.target.value })}
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Program Year</label>
+                    <input
+                      type="number"
+                      value={editForm.program_year}
+                      onChange={(e) => setEditForm({ ...editForm, program_year: e.target.value })}
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="1"
+                      max="4"
+                    />
+                  </div>
+                  <div className="flex space-x-3 pt-2">
+                    <button
+                      onClick={handleSaveProfile}
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="flex items-center space-x-1">
-                  <span>{student.sport || 'No sport assigned'}</span>
-                  <button
-                    onClick={handleEditSport}
-                    className="p-1 text-blue-200 hover:text-white hover:bg-blue-800 rounded"
-                    title="Edit sport"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {student.program_year && (
-                <>
-                  <span>•</span>
-                  <span>Year {student.program_year}</span>
-                </>
-              )}
+              </div>
             </div>
-            <p className="text-blue-100 mt-2">{student.email}</p>
-          </div>
+          ) : (
+            <div>
+              <div className="flex items-center space-x-3 mb-2">
+                <h1 className="text-3xl font-bold">{student.full_name}</h1>
+                <button
+                  onClick={handleEditProfile}
+                  className="p-2 text-blue-200 hover:text-white hover:bg-blue-800 rounded-lg transition-colors"
+                  title="Edit profile"
+                >
+                  <Edit2 className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex items-center space-x-4 text-blue-100">
+                <span>ID: {student.student_id || 'N/A'}</span>
+                <span>•</span>
+                <span>{student.sport || 'No sport assigned'}</span>
+                {student.program_year && (
+                  <>
+                    <span>•</span>
+                    <span>Year {student.program_year}</span>
+                  </>
+                )}
+              </div>
+              <p className="text-blue-100 mt-2">{student.email}</p>
+            </div>
+          )}
           <div className="text-right">
             <p className="text-blue-100 text-sm">Total Check-ins</p>
             <p className="text-4xl font-bold">{entries.length}</p>

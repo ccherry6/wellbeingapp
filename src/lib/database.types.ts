@@ -7,6 +7,7 @@ export interface Database {
           email: string
           full_name: string | null
           role: 'student' | 'coach' | 'admin'
+          actual_role: 'student' | 'coach' | 'admin'
           student_id: string | null
           sport: string | null
           program_year: number | null
@@ -18,6 +19,7 @@ export interface Database {
           email: string
           full_name?: string | null
           role?: 'student' | 'coach' | 'admin'
+          actual_role: 'student' | 'coach' | 'admin'
           student_id?: string | null
           sport?: string | null
           program_year?: number | null
@@ -29,6 +31,7 @@ export interface Database {
           email?: string
           full_name?: string | null
           role?: 'student' | 'coach' | 'admin'
+          actual_role?: 'student' | 'coach' | 'admin'
           student_id?: string | null
           sport?: string | null
           program_year?: number | null

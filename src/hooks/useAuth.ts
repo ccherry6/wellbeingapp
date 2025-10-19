@@ -299,16 +299,16 @@ export function useAuth() {
       return
     }
 
-    // Check if user is admin
-    const adminEmails = ['ccherry@bdc.nsw.edu.au']
-    if (!adminEmails.includes(userProfile.email)) {
+    // Check if user's actual role allows switching (coaches and admins can switch)
+    if (userProfile.actual_role !== 'coach' && userProfile.actual_role !== 'admin') {
       console.log('❌ Role switching not allowed for this user')
       return
     }
 
     try {
-      console.log('🔄 Switching role from', userProfile.role, 'to', newRole)
-      
+      console.log('🔄 Switching view from', userProfile.role, 'to', newRole)
+
+      // Update only the view role, not the actual_role
       const { error } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
@@ -319,8 +319,8 @@ export function useAuth() {
         throw error
       }
 
-      console.log('✅ Role updated in database, refreshing page...')
-      
+      console.log('✅ View role updated, refreshing page...')
+
       // Force page refresh to ensure clean state
       window.location.reload()
     } catch (error) {

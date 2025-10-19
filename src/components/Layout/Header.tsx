@@ -48,10 +48,10 @@ function PWAInstallPrompt() {
 export function Header() {
   const { user, userProfile, signOut, switchRole } = useAuth()
 
-  // Check if user can switch roles (coaches and admins)
+  // Check if user can switch roles (coaches and admins based on actual_role)
   const canSwitchRoles = () => {
     if (!userProfile) return false
-    return userProfile.role === 'coach' || userProfile.role === 'admin'
+    return userProfile.actual_role === 'coach' || userProfile.actual_role === 'admin'
   }
 
   const handleSignOut = async () => {

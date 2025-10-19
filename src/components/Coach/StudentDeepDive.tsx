@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, TrendingDown, TrendingUp, Minus, AlertTriangle, Calendar, MessageSquare } from 'lucide-react'
+import { ArrowLeft, TrendingDown, TrendingUp, Minus, AlertTriangle, Calendar, MessageSquare, Edit2, Check, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
@@ -42,6 +42,8 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
   const [entries, setEntries] = useState<WellnessEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMetric, setSelectedMetric] = useState<string>('all')
+  const [editingSport, setEditingSport] = useState(false)
+  const [sportValue, setSportValue] = useState('')
 
   useEffect(() => {
     fetchStudentData()
@@ -73,6 +75,34 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
       console.error('Error fetching student data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEditSport = () => {
+    setEditingSport(true)
+    setSportValue(student?.sport || '')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingSport(false)
+    setSportValue('')
+  }
+
+  const handleSaveSport = async () => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ sport: sportValue })
+        .eq('id', studentId)
+
+      if (error) throw error
+
+      setStudent(prev => prev ? { ...prev, sport: sportValue } : null)
+      setEditingSport(false)
+      setSportValue('')
+    } catch (error) {
+      console.error('Error updating sport:', error)
+      alert('Failed to update sport. Please try again.')
     }
   }
 
@@ -188,7 +218,42 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
             <div className="flex items-center space-x-4 text-blue-100">
               <span>ID: {student.student_id || 'N/A'}</span>
               <span>•</span>
-              <span>{student.sport || 'No sport assigned'}</span>
+              {editingSport ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={sportValue}
+                    onChange={(e) => setSportValue(e.target.value)}
+                    className="text-sm border border-blue-300 rounded px-2 py-1 w-40 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveSport}
+                    className="p-1 text-green-400 hover:bg-blue-800 rounded"
+                    title="Save"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="p-1 text-red-400 hover:bg-blue-800 rounded"
+                    title="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1">
+                  <span>{student.sport || 'No sport assigned'}</span>
+                  <button
+                    onClick={handleEditSport}
+                    className="p-1 text-blue-200 hover:text-white hover:bg-blue-800 rounded"
+                    title="Edit sport"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
               {student.program_year && (
                 <>
                   <span>•</span>

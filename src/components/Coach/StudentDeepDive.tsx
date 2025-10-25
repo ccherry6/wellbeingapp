@@ -484,6 +484,27 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
         )}
       </div>
 
+      {entries.some(e => e.hrv || e.resting_heart_rate) && (
+        <div className="bg-white rounded-lg border-2 border-teal-200 p-6">
+          <h3 className="text-lg font-bold text-teal-900 mb-4">Biometric Trends Over Time (HRV & Resting HR)</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={getTimeSeriesData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis yAxisId="left" orientation="left" label={{ value: 'HRV (ms)', angle: -90, position: 'insideLeft' }} />
+              <YAxis yAxisId="right" orientation="right" label={{ value: 'Resting HR (bpm)', angle: 90, position: 'insideRight' }} />
+              <Tooltip />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="HRV" stroke="#14b8a6" strokeWidth={3} name="HRV (ms)" connectNulls />
+              <Line yAxisId="right" type="monotone" dataKey="Resting HR" stroke="#06b6d4" strokeWidth={3} name="Resting HR (bpm)" connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="text-xs text-teal-600 mt-3 text-center">
+            This chart only shows dates where biometric data was recorded
+          </p>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Check-in History</h3>
         <div className="overflow-x-auto">

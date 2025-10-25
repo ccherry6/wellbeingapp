@@ -23,8 +23,48 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const [invitationToken, setInvitationToken] = useState<string | null>(null)
+  const [invitationData, setInvitationData] = useState<any>(null)
 
   const { signUp, signIn } = useAuth()
+
+  // Check for invitation token in URL
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+
+    if (token) {
+      console.log('🎫 Invitation token detected:', token)
+      setInvitationToken(token)
+      setIsSignUp(true) // Switch to signup mode
+
+      // Fetch invitation data
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/invitation_tokens?token=eq.${token}&used=eq.false&expires_at=gt.${new Date().toISOString()}`, {
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const invitation = data[0]
+            console.log('✅ Invitation loaded:', invitation)
+            setInvitationData(invitation)
+            setEmail(invitation.email)
+            setRole(invitation.role)
+            setRegistrationCode('BDC2026') // Pre-fill registration code
+          } else {
+            console.log('❌ Invalid or expired invitation token')
+            setError('Invalid or expired invitation link')
+          }
+        })
+        .catch(err => {
+          console.error('❌ Error loading invitation:', err)
+          setError('Failed to load invitation')
+        })
+    }
+  }, [])
 
   // Registration code - you can change this to whatever you want
   const VALID_REGISTRATION_CODE = 'BDC2026'
@@ -164,13 +204,24 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {invitationData && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-blue-800 text-sm font-medium">
+                🎉 You've been invited to join as a {invitationData.role}!
+              </p>
+              <p className="text-blue-600 text-xs mt-1">
+                Complete the form below to create your account.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          {isSignUp && (
+          {isSignUp && !invitationData && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Type
@@ -212,9 +263,10 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="your.email@school.edu"
                 required
+                disabled={!!invitationData}
               />
             </div>
           </div>

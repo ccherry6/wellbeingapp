@@ -18,7 +18,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const [fullName, setFullName] = useState('')
   const [studentId, setStudentId] = useState('')
   const [sport, setSport] = useState('')
-  const [team, setTeam] = useState('')
   const [role, setRole] = useState<'student' | 'coach'>('student')
   const [registrationCode, setRegistrationCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,8 +49,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           full_name: fullName,
           role,
           student_id: role === 'student' ? studentId : null,
-          sport: role === 'student' ? sport : null,
-          team: role === 'student' ? team : null
+          sport: role === 'student' ? sport : null
         })
         if (error) {
           throw error
@@ -285,19 +283,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                       className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                       placeholder="e.g., Swimming, Basketball"
                       required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Team
-                    </label>
-                    <input
-                      type="text"
-                      value={team}
-                      onChange={(e) => setTeam(e.target.value)}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      placeholder="Team name or level"
                     />
                   </div>
                 </>

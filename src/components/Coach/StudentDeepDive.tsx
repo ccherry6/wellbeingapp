@@ -29,6 +29,8 @@ interface WellnessEntry {
   notes: string
   wants_to_speak: boolean
   speak_to_who: string
+  hrv?: number
+  resting_heart_rate?: number
   created_at: string
 }
 
@@ -195,6 +197,8 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
       'Stress': entry.stress_level,
       'Training Fatigue': entry.training_fatigue,
       'Muscle Soreness': entry.muscle_soreness,
+      'HRV': entry.hrv || null,
+      'Resting HR': entry.resting_heart_rate || null,
     }))
   }
 
@@ -207,6 +211,11 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
     { key: 'muscle_soreness', label: 'Muscle Soreness', positive: false },
     { key: 'relationship_satisfaction', label: 'Relationships', positive: true },
     { key: 'program_belonging', label: 'Belonging', positive: true },
+  ]
+
+  const biometricMetrics = [
+    { key: 'hrv', label: 'HRV (ms)', positive: true, unit: 'ms' },
+    { key: 'resting_heart_rate', label: 'Resting HR', positive: false, unit: 'bpm' },
   ]
 
   if (loading) {
@@ -376,6 +385,31 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
         })}
       </div>
 
+      {entries.some(e => e.hrv || e.resting_heart_rate) && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Biometric Data (Wearable Devices)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {biometricMetrics.map((metric) => {
+              const entriesWithData = entries.filter(e => e[metric.key as keyof WellnessEntry] != null)
+              if (entriesWithData.length === 0) return null
+
+              const avg = entriesWithData.reduce((acc, e) => acc + (Number(e[metric.key as keyof WellnessEntry]) || 0), 0) / entriesWithData.length
+              const roundedAvg = Math.round(avg * 10) / 10
+
+              return (
+                <div key={metric.key} className="bg-teal-50 rounded-lg border-2 border-teal-200 p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="text-sm text-teal-900 font-medium">{metric.label}</p>
+                  </div>
+                  <p className="text-3xl font-bold text-teal-900">{roundedAvg}</p>
+                  <p className="text-xs text-teal-600 mt-1">{metric.unit} (avg of {entriesWithData.length} entries)</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Current Wellbeing Profile</h3>
@@ -451,6 +485,8 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
                 <th className="text-center py-2 px-3">Energy</th>
                 <th className="text-center py-2 px-3">Mood</th>
                 <th className="text-center py-2 px-3">Stress</th>
+                <th className="text-center py-2 px-3">HRV</th>
+                <th className="text-center py-2 px-3">HR</th>
                 <th className="text-left py-2 px-3">Notes</th>
               </tr>
             </thead>
@@ -464,6 +500,8 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
                   <td className="text-center py-3 px-3">{entry.energy_level}/10</td>
                   <td className="text-center py-3 px-3">{entry.mood}/10</td>
                   <td className="text-center py-3 px-3">{entry.stress_level}/10</td>
+                  <td className="text-center py-3 px-3 text-teal-700 font-medium">{entry.hrv || '-'}</td>
+                  <td className="text-center py-3 px-3 text-teal-700 font-medium">{entry.resting_heart_rate || '-'}</td>
                   <td className="py-3 px-3 text-gray-600 truncate max-w-xs">
                     {entry.notes || '-'}
                   </td>

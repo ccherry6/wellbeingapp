@@ -43,7 +43,9 @@ export default function CorrelationAnalysis() {
         { key: 'stress_level', label: 'Stress Level' },
         { key: 'academic_pressure', label: 'Academic Pressure' },
         { key: 'relationship_satisfaction', label: 'Relationship Satisfaction' },
-        { key: 'program_belonging', label: 'Program Belonging' }
+        { key: 'program_belonging', label: 'Program Belonging' },
+        { key: 'hrv', label: 'HRV' },
+        { key: 'resting_heart_rate', label: 'Resting HR' }
       ]
 
       const correlationResults: CorrelationData[] = []

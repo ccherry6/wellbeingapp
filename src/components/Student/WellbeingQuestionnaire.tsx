@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Save, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, ChevronDown, AlertTriangle } from 'lucide-react'
+import { Save, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, ChevronDown, AlertTriangle, Activity } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { BDCLogo } from '../BDCLogo'
@@ -123,6 +123,8 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
   const [injurySicknessNotes, setInjurySicknessNotes] = useState('')
   const [speakToWho, setSpeakToWho] = useState('')
   const [speakToEmail, setSpeakToEmail] = useState('')
+  const [hrv, setHrv] = useState<string>('')
+  const [restingHeartRate, setRestingHeartRate] = useState<string>('')
   const [showStaffDropdown, setShowStaffDropdown] = useState(false)
   const [filteredStaff, setFilteredStaff] = useState(schoolStaff)
   const [saving, setSaving] = useState(false)
@@ -301,6 +303,20 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
       }
     }
 
+    // Include biometric fields if provided
+    if (hrv.trim()) {
+      const hrvValue = parseInt(hrv.trim())
+      if (!isNaN(hrvValue) && hrvValue > 0) {
+        entryData.hrv = hrvValue
+      }
+    }
+    if (restingHeartRate.trim()) {
+      const rhrValue = parseInt(restingHeartRate.trim())
+      if (!isNaN(rhrValue) && rhrValue > 0) {
+        entryData.resting_heart_rate = rhrValue
+      }
+    }
+
     console.log('💾 PREPARED ENTRY DATA:', entryData)
 
     try {
@@ -420,6 +436,8 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
       setInjurySicknessNotes('')
       setSpeakToWho('')
       setSpeakToEmail('')
+      setHrv('')
+      setRestingHeartRate('')
       setShowStaffDropdown(false)
 
       // Mark as completed for today in localStorage for notifications
@@ -595,6 +613,56 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
               </div>
             )
           })}
+          </div>
+
+          <div className="space-y-4 mt-6 p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
+            <div className="flex items-start space-x-3 mb-4">
+              <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-teal-500 mt-1 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-base sm:text-lg font-medium text-teal-900 mb-1">
+                  Wearable Device Data (Optional)
+                </h3>
+                <p className="text-xs sm:text-sm text-teal-700 mb-3">
+                  If you wear a device like Whoop or Garmin to bed, you can record your overnight metrics here
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-teal-900 mb-2">
+                  Heart Rate Variability (HRV) - ms
+                </label>
+                <input
+                  type="number"
+                  value={hrv}
+                  onChange={(e) => setHrv(e.target.value)}
+                  placeholder="e.g., 65"
+                  min="0"
+                  className="w-full px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="text-xs text-teal-600 mt-1">
+                  Your overnight average HRV in milliseconds
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-teal-900 mb-2">
+                  Resting Heart Rate - bpm
+                </label>
+                <input
+                  type="number"
+                  value={restingHeartRate}
+                  onChange={(e) => setRestingHeartRate(e.target.value)}
+                  placeholder="e.g., 55"
+                  min="0"
+                  className="w-full px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="text-xs text-teal-600 mt-1">
+                  Your overnight resting heart rate in beats per minute
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3 mt-6">

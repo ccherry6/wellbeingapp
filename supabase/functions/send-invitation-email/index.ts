@@ -120,15 +120,20 @@ Deno.serve(async (req: Request) => {
           }
           .button {
             display: inline-block;
-            background: linear-gradient(135deg, #1e3a8a, #dc2626);
-            color: white !important;
+            background: #1e3a8a;
+            color: #ffffff !important;
             padding: 16px 40px;
-            text-decoration: none;
+            text-decoration: none !important;
             border-radius: 8px;
             margin: 25px 0;
             font-weight: 600;
             font-size: 16px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+          }
+          .button:hover {
+            background: #dc2626;
+            color: #ffffff !important;
           }
           .steps {
             background: #f9fafb;
@@ -184,7 +189,7 @@ Deno.serve(async (req: Request) => {
             <p>BDC Thrive is our comprehensive wellbeing and performance tracking platform designed specifically for the BDC High Performance Sport Program. ${role === 'coach' ? 'As a coach, you\'ll have access to student progress tracking, analytics, and wellbeing monitoring tools.' : 'Track your daily wellbeing, monitor your progress, and stay connected with your coaching team.'}</p>
 
             <center>
-              <a href="${inviteUrl}" class="button">
+              <a href="${inviteUrl}" class="button" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; margin: 25px 0; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 Accept Invitation & Sign Up
               </a>
             </center>

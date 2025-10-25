@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { AuthProvider } from './contexts/AuthContext'
 
 // Global error handler to catch uncaught errors that might cause black screen
 window.onerror = function(message, source, lineno, colno, error) {
@@ -48,9 +47,7 @@ try {
   root.render(
     <StrictMode>
       <ErrorBoundary>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <App />
       </ErrorBoundary>
     </StrictMode>
   )

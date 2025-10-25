@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { UserPlus, Mail, Shield, Trash2, CheckCircle, XCircle, Users, Copy } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../hooks/useAuth'
 
 interface UserProfile {
   id: string
@@ -12,11 +13,8 @@ interface UserProfile {
   created_at: string
 }
 
-interface UserManagementProps {
-  userId?: string
-}
-
-export default function UserManagement({ userId }: UserManagementProps = {}) {
+export default function UserManagement() {
+  const { user } = useAuth()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -63,7 +61,7 @@ export default function UserManagement({ userId }: UserManagementProps = {}) {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!userId) {
+    if (!user?.id) {
       setMessage({ type: 'error', text: 'You must be logged in to send invitations' })
       return
     }
@@ -77,7 +75,7 @@ export default function UserManagement({ userId }: UserManagementProps = {}) {
       const { data: inviterProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
-        .eq('id', userId)
+        .eq('id', user.id)
         .maybeSingle()
 
       const { data: tokenData, error: insertError } = await supabase
@@ -85,7 +83,7 @@ export default function UserManagement({ userId }: UserManagementProps = {}) {
         .insert({
           email: inviteEmail,
           role: inviteRole,
-          invited_by: userId
+          invited_by: user.id
         })
         .select()
         .single()

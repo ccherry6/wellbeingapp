@@ -25,7 +25,11 @@ interface Student {
   email: string
 }
 
-export function CoachDashboard() {
+interface CoachDashboardProps {
+  userId: string
+}
+
+export function CoachDashboard({ userId }: CoachDashboardProps) {
   const [students, setStudents] = useState<Student[]>([])
   const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users'>('overview')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
@@ -410,7 +414,7 @@ export function CoachDashboard() {
         {selectedView === 'risk' && <RiskScoring />}
         {selectedView === 'correlations' && <CorrelationAnalysis />}
         {selectedView === 'weekly' && <WeeklySummary />}
-        {selectedView === 'users' && <UserManagement />}
+        {selectedView === 'users' && <UserManagement userId={userId} />}
         {selectedView === 'deepdive' && selectedStudentId && (
           <StudentDeepDive
             studentId={selectedStudentId}

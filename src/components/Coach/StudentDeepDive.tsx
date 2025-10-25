@@ -385,30 +385,40 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
         })}
       </div>
 
-      {entries.some(e => e.hrv || e.resting_heart_rate) && (
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Biometric Data (Wearable Devices)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {biometricMetrics.map((metric) => {
-              const entriesWithData = entries.filter(e => e[metric.key as keyof WellnessEntry] != null)
-              if (entriesWithData.length === 0) return null
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Biometric Data (Wearable Devices)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {biometricMetrics.map((metric) => {
+            const entriesWithData = entries.filter(e => e[metric.key as keyof WellnessEntry] != null)
+            const hasData = entriesWithData.length > 0
 
-              const avg = entriesWithData.reduce((acc, e) => acc + (Number(e[metric.key as keyof WellnessEntry]) || 0), 0) / entriesWithData.length
-              const roundedAvg = Math.round(avg * 10) / 10
-
+            if (!hasData) {
               return (
-                <div key={metric.key} className="bg-teal-50 rounded-lg border-2 border-teal-200 p-4">
+                <div key={metric.key} className="bg-gray-50 rounded-lg border-2 border-gray-200 p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <p className="text-sm text-teal-900 font-medium">{metric.label}</p>
+                    <p className="text-sm text-gray-600 font-medium">{metric.label}</p>
                   </div>
-                  <p className="text-3xl font-bold text-teal-900">{roundedAvg}</p>
-                  <p className="text-xs text-teal-600 mt-1">{metric.unit} (avg of {entriesWithData.length} entries)</p>
+                  <p className="text-3xl font-bold text-gray-400">-</p>
+                  <p className="text-xs text-gray-500 mt-1">No data recorded</p>
                 </div>
               )
-            })}
-          </div>
+            }
+
+            const avg = entriesWithData.reduce((acc, e) => acc + (Number(e[metric.key as keyof WellnessEntry]) || 0), 0) / entriesWithData.length
+            const roundedAvg = Math.round(avg * 10) / 10
+
+            return (
+              <div key={metric.key} className="bg-teal-50 rounded-lg border-2 border-teal-200 p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-sm text-teal-900 font-medium">{metric.label}</p>
+                </div>
+                <p className="text-3xl font-bold text-teal-900">{roundedAvg}</p>
+                <p className="text-xs text-teal-600 mt-1">{metric.unit} (avg of {entriesWithData.length} entries)</p>
+              </div>
+            )
+          })}
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">

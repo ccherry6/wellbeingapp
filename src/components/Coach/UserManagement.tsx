@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { UserPlus, Mail, Shield, Trash2, CheckCircle, XCircle, Users, Copy } from 'lucide-react'
+import { UserPlus, Mail, Trash2, CheckCircle, XCircle, Users, Copy } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -25,8 +25,6 @@ export default function UserManagement() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const REGISTRATION_CODE = 'BDC2026'
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -310,71 +308,6 @@ export default function UserManagement() {
           <p className="text-sm text-blue-800 mt-2">
             Share this code with new users when they register
           </p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-orange-100 rounded-lg">
-            <Shield className="w-6 h-6 text-orange-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Netlify Environment Variables</h2>
-            <p className="text-sm text-gray-600">Copy these to your Netlify deployment settings</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_SUPABASE_URL
-            </label>
-            <div className="flex items-center gap-2">
-              <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {SUPABASE_URL}
-              </code>
-              <button
-                onClick={() => copyToClipboard(SUPABASE_URL, 'url')}
-                className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
-                title="Copy supabase URL"
-              >
-                {copiedField === 'url' ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <Copy className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              VITE_SUPABASE_ANON_KEY
-            </label>
-            <div className="flex items-center gap-2">
-              <code className="bg-gray-50 px-3 py-2 rounded border border-gray-200 text-gray-900 font-mono text-sm flex-1 overflow-x-auto">
-                {SUPABASE_ANON_KEY}
-              </code>
-              <button
-                onClick={() => copyToClipboard(SUPABASE_ANON_KEY, 'key')}
-                className="p-2 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
-                title="Copy supabase Anon Key"
-              >
-                {copiedField === 'key' ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <Copy className="w-5 h-5 text-gray-600" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="p-4 bg-orange-50 rounded-lg">
-            <p className="text-sm text-orange-800">
-              <strong>Instructions:</strong> Go to your Netlify dashboard → Site settings → Environment variables,
-              update these two variables with the values above, then trigger a new deploy.
-            </p>
-          </div>
         </div>
       </div>
 

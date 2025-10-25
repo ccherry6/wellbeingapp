@@ -99,7 +99,8 @@ export default function UserManagement() {
         inviteeEmail: inviteEmail,
         role: inviteRole,
         registrationCode: REGISTRATION_CODE,
-        inviteUrl: inviteUrlWithToken
+        inviteUrl: inviteUrlWithToken,
+        inviterName: inviterProfile?.full_name || 'BDC Team'
       }
       console.log('📧 Email payload:', emailPayload)
 

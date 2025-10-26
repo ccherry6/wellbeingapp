@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, ExternalLink, Book, Phone, Video, FileText, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, ExternalLink, Book, Phone, Video, FileText, AlertCircle, Zap, ToggleLeft, ToggleRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 interface Resource {
@@ -11,14 +11,43 @@ interface Resource {
   url?: string
   phone_number?: string
   is_emergency: boolean
+  metric_name?: string | null
+  trigger_condition?: string | null
+  trigger_value?: number | null
+  auto_deploy?: boolean
+  trigger_enabled?: boolean
   created_at: string
 }
+
+const metricOptions = [
+  { value: 'sleep_quality', label: 'Sleep Quality' },
+  { value: 'sleep_hours', label: 'Sleep Hours' },
+  { value: 'energy_level', label: 'Energy Level' },
+  { value: 'training_fatigue', label: 'Training Fatigue' },
+  { value: 'muscle_soreness', label: 'Muscle Soreness' },
+  { value: 'mood', label: 'Mood' },
+  { value: 'stress_level', label: 'Stress Level' },
+  { value: 'academic_pressure', label: 'Academic Pressure' },
+  { value: 'relationship_satisfaction', label: 'Relationship Satisfaction' },
+  { value: 'program_belonging', label: 'Program Belonging' },
+  { value: 'hrv', label: 'Heart Rate Variability (HRV)' },
+  { value: 'resting_heart_rate', label: 'Resting Heart Rate' }
+]
+
+const conditionOptions = [
+  { value: 'less_than', label: 'Less than (<)' },
+  { value: 'less_than_or_equal', label: 'Less than or equal (≤)' },
+  { value: 'greater_than', label: 'Greater than (>)' },
+  { value: 'greater_than_or_equal', label: 'Greater than or equal (≥)' },
+  { value: 'equals', label: 'Equals (=)' }
+]
 
 export default function ResourceManagement() {
   const [resources, setResources] = useState<Resource[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingResource, setEditingResource] = useState<Resource | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showTriggers, setShowTriggers] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -27,7 +56,12 @@ export default function ResourceManagement() {
     resource_type: 'link' as Resource['resource_type'],
     url: '',
     phone_number: '',
-    is_emergency: false
+    is_emergency: false,
+    metric_name: null as string | null,
+    trigger_condition: null as string | null,
+    trigger_value: null as number | null,
+    auto_deploy: false,
+    trigger_enabled: false
   })
 
   useEffect(() => {
@@ -40,6 +74,7 @@ export default function ResourceManagement() {
         .from('resources')
         .select('*')
         .order('is_emergency', { ascending: false })
+        .order('trigger_enabled', { ascending: false })
         .order('category')
         .order('title')
 
@@ -56,17 +91,25 @@ export default function ResourceManagement() {
     e.preventDefault()
 
     try {
+      const resourceData = {
+        ...formData,
+        metric_name: formData.trigger_enabled ? formData.metric_name : null,
+        trigger_condition: formData.trigger_enabled ? formData.trigger_condition : null,
+        trigger_value: formData.trigger_enabled ? formData.trigger_value : null,
+        auto_deploy: formData.trigger_enabled ? formData.auto_deploy : false
+      }
+
       if (editingResource) {
         const { error } = await supabase
           .from('resources')
-          .update(formData)
+          .update(resourceData)
           .eq('id', editingResource.id)
 
         if (error) throw error
       } else {
         const { error } = await supabase
           .from('resources')
-          .insert([formData])
+          .insert([resourceData])
 
         if (error) throw error
       }
@@ -105,9 +148,29 @@ export default function ResourceManagement() {
       resource_type: resource.resource_type,
       url: resource.url || '',
       phone_number: resource.phone_number || '',
-      is_emergency: resource.is_emergency
+      is_emergency: resource.is_emergency,
+      metric_name: resource.metric_name || null,
+      trigger_condition: resource.trigger_condition || null,
+      trigger_value: resource.trigger_value || null,
+      auto_deploy: resource.auto_deploy || false,
+      trigger_enabled: resource.trigger_enabled || false
     })
     setShowAddForm(true)
+  }
+
+  const toggleTrigger = async (resourceId: string, currentState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('resources')
+        .update({ trigger_enabled: !currentState })
+        .eq('id', resourceId)
+
+      if (error) throw error
+      fetchResources()
+    } catch (error) {
+      console.error('Error toggling trigger:', error)
+      alert('Failed to toggle trigger')
+    }
   }
 
   const resetForm = () => {
@@ -118,7 +181,12 @@ export default function ResourceManagement() {
       resource_type: 'link',
       url: '',
       phone_number: '',
-      is_emergency: false
+      is_emergency: false,
+      metric_name: null,
+      trigger_condition: null,
+      trigger_value: null,
+      auto_deploy: false,
+      trigger_enabled: false
     })
     setEditingResource(null)
     setShowAddForm(false)
@@ -143,16 +211,30 @@ export default function ResourceManagement() {
     }
   }
 
+  const getTriggerDescription = (resource: Resource) => {
+    if (!resource.metric_name || !resource.trigger_condition || resource.trigger_value === null) {
+      return 'No trigger configured'
+    }
+
+    const metric = metricOptions.find(m => m.value === resource.metric_name)?.label || resource.metric_name
+    const condition = conditionOptions.find(c => c.value === resource.trigger_condition)?.label || resource.trigger_condition
+
+    return `Deploy when ${metric} ${condition} ${resource.trigger_value}`
+  }
+
   if (loading) {
     return <div className="text-center py-8">Loading resources...</div>
   }
+
+  const resourcesWithTriggers = resources.filter(r => r.trigger_enabled)
+  const resourcesWithoutTriggers = resources.filter(r => !r.trigger_enabled)
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Resource Management</h2>
-          <p className="text-gray-600">Manage support resources for students</p>
+          <p className="text-gray-600">Manage support resources and auto-deployment triggers</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
@@ -261,6 +343,96 @@ export default function ResourceManagement() {
               </label>
             </div>
 
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="trigger_enabled"
+                  checked={formData.trigger_enabled}
+                  onChange={(e) => setFormData({ ...formData, trigger_enabled: e.target.checked })}
+                  className="mr-2"
+                />
+                <label htmlFor="trigger_enabled" className="text-sm font-medium text-gray-700 flex items-center">
+                  <Zap className="w-4 h-4 mr-1 text-yellow-600" />
+                  Enable Auto-Deploy Trigger
+                </label>
+              </div>
+
+              {formData.trigger_enabled && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+                  <p className="text-sm text-gray-700 mb-3">
+                    This resource will be automatically deployed to students when their wellbeing metrics meet the trigger conditions.
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Metric to Monitor
+                    </label>
+                    <select
+                      value={formData.metric_name || ''}
+                      onChange={(e) => setFormData({ ...formData, metric_name: e.target.value || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      required={formData.trigger_enabled}
+                    >
+                      <option value="">Select a metric...</option>
+                      {metricOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Condition
+                      </label>
+                      <select
+                        value={formData.trigger_condition || ''}
+                        onChange={(e) => setFormData({ ...formData, trigger_condition: e.target.value || null })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required={formData.trigger_enabled}
+                      >
+                        <option value="">Select...</option>
+                        {conditionOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Value
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="200"
+                        step="0.1"
+                        value={formData.trigger_value || ''}
+                        onChange={(e) => setFormData({ ...formData, trigger_value: e.target.value ? parseFloat(e.target.value) : null })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 4"
+                        required={formData.trigger_enabled}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="auto_deploy"
+                      checked={formData.auto_deploy}
+                      onChange={(e) => setFormData({ ...formData, auto_deploy: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <label htmlFor="auto_deploy" className="text-sm text-gray-700">
+                      Automatically show this resource to students (no notification, just visible in their resources)
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex space-x-3 pt-4">
               <button
                 type="submit"
@@ -280,79 +452,182 @@ export default function ResourceManagement() {
         </div>
       )}
 
-      <div className="grid gap-4">
-        {resources.map((resource) => (
-          <div
-            key={resource.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3 flex-1">
-                <div className="text-blue-900 mt-1">
-                  {resource.is_emergency && <AlertCircle className="w-5 h-5 text-red-600" />}
-                  {!resource.is_emergency && getResourceIcon(resource.resource_type)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="font-semibold text-gray-900">{resource.title}</h3>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(resource.category)}`}>
-                      {resource.category.replace('_', ' ')}
-                    </span>
-                    {resource.is_emergency && (
-                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                        EMERGENCY
-                      </span>
-                    )}
+      {resourcesWithTriggers.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+            <Zap className="w-5 h-5 mr-2 text-yellow-600" />
+            Resources with Auto-Deploy Triggers ({resourcesWithTriggers.length})
+          </h3>
+          <div className="grid gap-4">
+            {resourcesWithTriggers.map((resource) => (
+              <div
+                key={resource.id}
+                className="bg-white rounded-lg shadow-sm border-2 border-yellow-200 p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="text-blue-900 mt-1">
+                      {resource.is_emergency && <AlertCircle className="w-5 h-5 text-red-600" />}
+                      {!resource.is_emergency && getResourceIcon(resource.resource_type)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="font-semibold text-gray-900">{resource.title}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(resource.category)}`}>
+                          {resource.category.replace('_', ' ')}
+                        </span>
+                        {resource.is_emergency && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                            EMERGENCY
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-600 text-sm mb-2">{resource.description}</p>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Zap className="w-4 h-4 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-800">
+                          {getTriggerDescription(resource)}
+                        </span>
+                      </div>
+                      {resource.url && (
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          {resource.url}
+                        </a>
+                      )}
+                      {resource.phone_number && (
+                        <a
+                          href={`tel:${resource.phone_number}`}
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                        >
+                          <Phone className="w-3 h-3 mr-1" />
+                          {resource.phone_number}
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-gray-600 text-sm mb-2">{resource.description}</p>
-                  {resource.url && (
-                    <a
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => toggleTrigger(resource.id, resource.trigger_enabled || false)}
+                      className="text-yellow-600 hover:text-yellow-800 transition-colors"
+                      title="Disable trigger"
                     >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      {resource.url}
-                    </a>
-                  )}
-                  {resource.phone_number && (
-                    <a
-                      href={`tel:${resource.phone_number}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                      <ToggleRight className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(resource)}
+                      className="text-gray-600 hover:text-blue-600 transition-colors"
                     >
-                      <Phone className="w-3 h-3 mr-1" />
-                      {resource.phone_number}
-                    </a>
-                  )}
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(resource.id)}
+                      className="text-gray-600 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEdit(resource)}
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(resource.id)}
-                  className="text-gray-600 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
+      )}
 
-        {resources.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <Book className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No resources added yet</p>
-            <p className="text-sm">Click "Add Resource" to get started</p>
+      {resourcesWithoutTriggers.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            All Resources ({resourcesWithoutTriggers.length})
+          </h3>
+          <div className="grid gap-4">
+            {resourcesWithoutTriggers.map((resource) => (
+              <div
+                key={resource.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="text-blue-900 mt-1">
+                      {resource.is_emergency && <AlertCircle className="w-5 h-5 text-red-600" />}
+                      {!resource.is_emergency && getResourceIcon(resource.resource_type)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="font-semibold text-gray-900">{resource.title}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(resource.category)}`}>
+                          {resource.category.replace('_', ' ')}
+                        </span>
+                        {resource.is_emergency && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                            EMERGENCY
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-600 text-sm mb-2">{resource.description}</p>
+                      {resource.url && (
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          {resource.url}
+                        </a>
+                      )}
+                      {resource.phone_number && (
+                        <a
+                          href={`tel:${resource.phone_number}`}
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                        >
+                          <Phone className="w-3 h-3 mr-1" />
+                          {resource.phone_number}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    {resource.metric_name && (
+                      <button
+                        onClick={() => toggleTrigger(resource.id, resource.trigger_enabled || false)}
+                        className="text-gray-400 hover:text-yellow-600 transition-colors"
+                        title="Enable trigger"
+                      >
+                        <ToggleLeft className="w-5 h-5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleEdit(resource)}
+                      className="text-gray-600 hover:text-blue-600 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(resource.id)}
+                      className="text-gray-600 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {resources.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <Book className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>No resources added yet</p>
+          <p className="text-sm">Click "Add Resource" to get started</p>
+        </div>
+      )}
     </div>
   )
 }

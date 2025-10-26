@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, ExternalLink, Book, Phone, Video, FileText, AlertCircle, Zap, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, ExternalLink, Book, Phone, Video, FileText, AlertCircle, Zap, ToggleLeft, ToggleRight, X, Mail } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+
+interface TriggerCondition {
+  metric_name: string
+  condition: string
+  value: number
+}
 
 interface Resource {
   id: string
@@ -11,11 +17,13 @@ interface Resource {
   url?: string
   phone_number?: string
   is_emergency: boolean
-  metric_name?: string | null
-  trigger_condition?: string | null
-  trigger_value?: number | null
+  triggers?: TriggerCondition[]
+  trigger_logic?: 'any' | 'all'
   auto_deploy?: boolean
   trigger_enabled?: boolean
+  send_email?: boolean
+  email_subject?: string
+  email_message?: string
   created_at: string
 }
 
@@ -47,7 +55,6 @@ export default function ResourceManagement() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingResource, setEditingResource] = useState<Resource | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showTriggers, setShowTriggers] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -57,11 +64,19 @@ export default function ResourceManagement() {
     url: '',
     phone_number: '',
     is_emergency: false,
-    metric_name: null as string | null,
-    trigger_condition: null as string | null,
-    trigger_value: null as number | null,
+    triggers: [] as TriggerCondition[],
+    trigger_logic: 'any' as 'any' | 'all',
     auto_deploy: false,
-    trigger_enabled: false
+    trigger_enabled: false,
+    send_email: false,
+    email_subject: '',
+    email_message: ''
+  })
+
+  const [newTrigger, setNewTrigger] = useState<TriggerCondition>({
+    metric_name: '',
+    condition: '',
+    value: 0
   })
 
   useEffect(() => {
@@ -87,16 +102,55 @@ export default function ResourceManagement() {
     }
   }
 
+  const addTriggerToForm = () => {
+    if (!newTrigger.metric_name || !newTrigger.condition || newTrigger.value === undefined) {
+      alert('Please fill in all trigger fields')
+      return
+    }
+
+    setFormData({
+      ...formData,
+      triggers: [...formData.triggers, newTrigger]
+    })
+
+    setNewTrigger({
+      metric_name: '',
+      condition: '',
+      value: 0
+    })
+  }
+
+  const removeTriggerFromForm = (index: number) => {
+    setFormData({
+      ...formData,
+      triggers: formData.triggers.filter((_, i) => i !== index)
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (formData.trigger_enabled && formData.triggers.length === 0) {
+      alert('Please add at least one trigger condition')
+      return
+    }
+
     try {
       const resourceData = {
-        ...formData,
-        metric_name: formData.trigger_enabled ? formData.metric_name : null,
-        trigger_condition: formData.trigger_enabled ? formData.trigger_condition : null,
-        trigger_value: formData.trigger_enabled ? formData.trigger_value : null,
-        auto_deploy: formData.trigger_enabled ? formData.auto_deploy : false
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        resource_type: formData.resource_type,
+        url: formData.url || null,
+        phone_number: formData.phone_number || null,
+        is_emergency: formData.is_emergency,
+        triggers: formData.trigger_enabled ? formData.triggers : [],
+        trigger_logic: formData.trigger_enabled ? formData.trigger_logic : 'any',
+        auto_deploy: formData.trigger_enabled ? formData.auto_deploy : false,
+        trigger_enabled: formData.trigger_enabled,
+        send_email: formData.trigger_enabled ? formData.send_email : false,
+        email_subject: formData.trigger_enabled && formData.send_email ? formData.email_subject : null,
+        email_message: formData.trigger_enabled && formData.send_email ? formData.email_message : null
       }
 
       if (editingResource) {
@@ -149,11 +203,13 @@ export default function ResourceManagement() {
       url: resource.url || '',
       phone_number: resource.phone_number || '',
       is_emergency: resource.is_emergency,
-      metric_name: resource.metric_name || null,
-      trigger_condition: resource.trigger_condition || null,
-      trigger_value: resource.trigger_value || null,
+      triggers: resource.triggers || [],
+      trigger_logic: resource.trigger_logic || 'any',
       auto_deploy: resource.auto_deploy || false,
-      trigger_enabled: resource.trigger_enabled || false
+      trigger_enabled: resource.trigger_enabled || false,
+      send_email: resource.send_email || false,
+      email_subject: resource.email_subject || '',
+      email_message: resource.email_message || ''
     })
     setShowAddForm(true)
   }
@@ -182,11 +238,18 @@ export default function ResourceManagement() {
       url: '',
       phone_number: '',
       is_emergency: false,
-      metric_name: null,
-      trigger_condition: null,
-      trigger_value: null,
+      triggers: [],
+      trigger_logic: 'any',
       auto_deploy: false,
-      trigger_enabled: false
+      trigger_enabled: false,
+      send_email: false,
+      email_subject: '',
+      email_message: ''
+    })
+    setNewTrigger({
+      metric_name: '',
+      condition: '',
+      value: 0
     })
     setEditingResource(null)
     setShowAddForm(false)
@@ -212,14 +275,18 @@ export default function ResourceManagement() {
   }
 
   const getTriggerDescription = (resource: Resource) => {
-    if (!resource.metric_name || !resource.trigger_condition || resource.trigger_value === null) {
-      return 'No trigger configured'
+    if (!resource.triggers || resource.triggers.length === 0) {
+      return 'No triggers configured'
     }
 
-    const metric = metricOptions.find(m => m.value === resource.metric_name)?.label || resource.metric_name
-    const condition = conditionOptions.find(c => c.value === resource.trigger_condition)?.label || resource.trigger_condition
+    const descriptions = resource.triggers.map(trigger => {
+      const metric = metricOptions.find(m => m.value === trigger.metric_name)?.label || trigger.metric_name
+      const condition = conditionOptions.find(c => c.value === trigger.condition)?.label || trigger.condition
+      return `${metric} ${condition} ${trigger.value}`
+    })
 
-    return `Deploy when ${metric} ${condition} ${resource.trigger_value}`
+    const logic = resource.trigger_logic === 'all' ? ' AND ' : ' OR '
+    return `Deploy when: ${descriptions.join(logic)}`
   }
 
   if (loading) {
@@ -359,62 +426,103 @@ export default function ResourceManagement() {
               </div>
 
               {formData.trigger_enabled && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
                   <p className="text-sm text-gray-700 mb-3">
                     This resource will be automatically deployed to students when their wellbeing metrics meet the trigger conditions.
                   </p>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Metric to Monitor
-                    </label>
-                    <select
-                      value={formData.metric_name || ''}
-                      onChange={(e) => setFormData({ ...formData, metric_name: e.target.value || null })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      required={formData.trigger_enabled}
-                    >
-                      <option value="">Select a metric...</option>
-                      {metricOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <div className="bg-white rounded-lg p-4 space-y-3">
+                    <h4 className="font-medium text-gray-900 mb-2">Add Trigger Conditions</h4>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Condition
-                      </label>
-                      <select
-                        value={formData.trigger_condition || ''}
-                        onChange={(e) => setFormData({ ...formData, trigger_condition: e.target.value || null })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        required={formData.trigger_enabled}
-                      >
-                        <option value="">Select...</option>
-                        {conditionOptions.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-5">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Metric</label>
+                        <select
+                          value={newTrigger.metric_name}
+                          onChange={(e) => setNewTrigger({ ...newTrigger, metric_name: e.target.value })}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select...</option>
+                          {metricOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-4">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Condition</label>
+                        <select
+                          value={newTrigger.condition}
+                          onChange={(e) => setNewTrigger({ ...newTrigger, condition: e.target.value })}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select...</option>
+                          {conditionOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Value</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="200"
+                          step="0.1"
+                          value={newTrigger.value}
+                          onChange={(e) => setNewTrigger({ ...newTrigger, value: parseFloat(e.target.value) })}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div className="col-span-1 flex items-end">
+                        <button
+                          type="button"
+                          onClick={addTriggerToForm}
+                          className="w-full px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                        >
+                          <Plus className="w-4 h-4 mx-auto" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {formData.triggers.length > 0 && (
+                      <div className="space-y-2 mt-3">
+                        <div className="flex items-center justify-between">
+                          <h5 className="text-sm font-medium text-gray-900">Active Triggers ({formData.triggers.length})</h5>
+                          {formData.triggers.length > 1 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600">Match:</span>
+                              <select
+                                value={formData.trigger_logic}
+                                onChange={(e) => setFormData({ ...formData, trigger_logic: e.target.value as 'any' | 'all' })}
+                                className="text-xs px-2 py-1 border border-gray-300 rounded"
+                              >
+                                <option value="any">Any (OR)</option>
+                                <option value="all">All (AND)</option>
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                        {formData.triggers.map((trigger, index) => (
+                          <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
+                            <span className="text-sm text-gray-700">
+                              {metricOptions.find(m => m.value === trigger.metric_name)?.label}{' '}
+                              {conditionOptions.find(c => c.value === trigger.condition)?.label}{' '}
+                              {trigger.value}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeTriggerFromForm(index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Value
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="200"
-                        step="0.1"
-                        value={formData.trigger_value || ''}
-                        onChange={(e) => setFormData({ ...formData, trigger_value: e.target.value ? parseFloat(e.target.value) : null })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., 4"
-                        required={formData.trigger_enabled}
-                      />
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center">
@@ -426,8 +534,51 @@ export default function ResourceManagement() {
                       className="mr-2"
                     />
                     <label htmlFor="auto_deploy" className="text-sm text-gray-700">
-                      Automatically show this resource to students (no notification, just visible in their resources)
+                      Automatically show this resource to students (visible in their dashboard)
                     </label>
+                  </div>
+
+                  <div className="border-t border-gray-300 pt-3">
+                    <div className="flex items-center mb-3">
+                      <input
+                        type="checkbox"
+                        id="send_email"
+                        checked={formData.send_email}
+                        onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <label htmlFor="send_email" className="text-sm font-medium text-gray-700 flex items-center">
+                        <Mail className="w-4 h-4 mr-1 text-blue-600" />
+                        Send Email Notification to Student
+                      </label>
+                    </div>
+
+                    {formData.send_email && (
+                      <div className="space-y-3 ml-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email Subject</label>
+                          <input
+                            type="text"
+                            value={formData.email_subject}
+                            onChange={(e) => setFormData({ ...formData, email_subject: e.target.value })}
+                            placeholder="Support Resource Available"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            required={formData.send_email}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email Message</label>
+                          <textarea
+                            value={formData.email_message}
+                            onChange={(e) => setFormData({ ...formData, email_message: e.target.value })}
+                            placeholder="We noticed you might benefit from this resource..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            rows={3}
+                            required={formData.send_email}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -481,10 +632,16 @@ export default function ResourceManagement() {
                             EMERGENCY
                           </span>
                         )}
+                        {resource.send_email && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 flex items-center">
+                            <Mail className="w-3 h-3 mr-1" />
+                            Email
+                          </span>
+                        )}
                       </div>
                       <p className="text-gray-600 text-sm mb-2">{resource.description}</p>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Zap className="w-4 h-4 text-yellow-600" />
+                      <div className="flex items-start space-x-2 mb-2">
+                        <Zap className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm font-medium text-yellow-800">
                           {getTriggerDescription(resource)}
                         </span>
@@ -592,15 +749,6 @@ export default function ResourceManagement() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    {resource.metric_name && (
-                      <button
-                        onClick={() => toggleTrigger(resource.id, resource.trigger_enabled || false)}
-                        className="text-gray-400 hover:text-yellow-600 transition-colors"
-                        title="Enable trigger"
-                      >
-                        <ToggleLeft className="w-5 h-5" />
-                      </button>
-                    )}
                     <button
                       onClick={() => handleEdit(resource)}
                       className="text-gray-600 hover:text-blue-600 transition-colors"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { UserPlus, Mail, Trash2, CheckCircle, XCircle, Users, Copy, GraduationCap, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { formatDateAEST } from '../../lib/dateUtils'
 
 interface UserProfile {
   id: string
@@ -384,7 +385,7 @@ export default function UserManagement() {
                           {userProfile.full_name || 'No name'}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {new Date(userProfile.created_at).toLocaleDateString()}
+                          {formatDateAEST(userProfile.created_at)}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">{userProfile.email}</td>
@@ -449,7 +450,7 @@ export default function UserManagement() {
                           {userProfile.full_name || 'No name'}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {new Date(userProfile.created_at).toLocaleDateString()}
+                          {formatDateAEST(userProfile.created_at)}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">{userProfile.email}</td>

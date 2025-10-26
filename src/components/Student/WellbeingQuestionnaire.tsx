@@ -3,6 +3,7 @@ import { Save, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, 
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { BDCLogo } from '../BDCLogo'
+import { formatDateForInput, formatDateTimeAEST } from '../../lib/dateUtils'
 
 // School staff directory - you can easily update this list
 const schoolStaff = [
@@ -159,7 +160,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
     const checkTodaySubmission = async () => {
       if (!user) return
 
-      const today = new Date().toISOString().split('T')[0]
+      const today = formatDateForInput(new Date())
 
       try {
         const { data, error } = await supabase
@@ -215,7 +216,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
 
     console.log('🔄 STARTING WELLNESS ENTRY SUBMISSION')
     console.log('🔄 User ID:', user.id)
-    console.log('🔄 Entry date:', new Date().toISOString().split('T')[0])
+    console.log('🔄 Entry date:', formatDateForInput(new Date()))
     console.log('🔄 Responses:', responses)
     console.log('🔄 Environment check:', {
       hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
@@ -279,7 +280,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
     // Prepare the data to insert
     const entryData: any = {
       user_id: user.id,
-      entry_date: new Date().toISOString().split('T')[0],
+      entry_date: formatDateForInput(new Date()),
       ...responses,
       notes: notes.trim() || null,
       wants_to_speak: wantsToSpeak
@@ -385,7 +386,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
               studentEmail: user.email || 'No email',
               studentId: profile?.student_id || 'N/A',
               sport: profile?.sport || 'N/A',
-              entryDate: new Date().toISOString().split('T')[0],
+              entryDate: formatDateForInput(new Date()),
               alerts: alertMessages,
               notes: notes || null,
               injurySicknessNotes: isInjuredOrSick ? injurySicknessNotes : null
@@ -441,7 +442,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
       setShowStaffDropdown(false)
 
       // Mark as completed for today in localStorage for notifications
-      const today = new Date().toISOString().split('T')[0]
+      const today = formatDateForInput(new Date())
       localStorage.setItem(`completed_${user.id}_${today}`, 'true')
 
       onSuccess?.()
@@ -818,7 +819,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
 
             {lastSaved && (
               <p className="text-xs sm:text-sm text-gray-500 text-center mt-3">
-                Last submitted: {lastSaved.toLocaleString()}
+                Last submitted: {formatDateTimeAEST(lastSaved)}
               </p>
             )}
           </div>

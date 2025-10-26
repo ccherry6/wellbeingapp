@@ -13,6 +13,7 @@ import CorrelationAnalysis from './CorrelationAnalysis'
 import WeeklySummary from './WeeklySummary'
 import UserManagement from './UserManagement'
 import { BDCLogo } from '../BDCLogo'
+import { formatDateAEST } from '../../lib/dateUtils'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
@@ -105,7 +106,7 @@ export function CoachDashboard() {
       const csvContent = [
         headers.join(','),
         ...responses.map(row => [
-          new Date(row.created_at).toLocaleDateString(),
+          formatDateAEST(row.created_at),
           row.user_profiles?.full_name || '',
           row.user_profiles?.student_id || '',
           row.user_profiles?.sport || '',
@@ -150,7 +151,7 @@ export function CoachDashboard() {
       pdf.setFontSize(20)
       pdf.text('BDC Wellbeing Analytics Report', 20, 30)
       pdf.setFontSize(12)
-      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45)
+      pdf.text(`Generated on: ${formatDateAEST(new Date())}`, 20, 45)
       pdf.text(`Total Students: ${students.length}`, 20, 55)
       
       // Capture charts as images

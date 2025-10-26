@@ -65,6 +65,24 @@ const initializeAuth = () => {
 
   supabase.auth.onAuthStateChange((event, session) => {
     console.log('🔄 Auth state change:', event, session?.user?.email || 'No user')
+
+    // Handle sign out explicitly
+    if (event === 'SIGNED_OUT') {
+      console.log('🔄 User signed out, clearing state')
+      setSharedState(null, null, false, null)
+      return
+    }
+
+    // Handle sign in
+    if (event === 'SIGNED_IN' && session?.user) {
+      console.log('🔄 User signed in, fetching profile')
+      sharedUser = session.user
+      sharedError = null
+      fetchUserProfile(session.user.id)
+      return
+    }
+
+    // General state update
     sharedUser = session?.user ?? null
     sharedError = null
     if (sharedUser) {
@@ -329,13 +347,32 @@ export function useAuth() {
   const signOut = async () => {
     try {
       console.log('🔄 Signing out...')
-      const { error } = await supabase.auth.signOut()
+
+      // Clear shared state immediately
       setSharedState(null, null, false, null)
-      console.log('✅ Sign out successful')
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error('❌ Sign out error:', error)
+      } else {
+        console.log('✅ Sign out successful')
+      }
+
+      // Clear any stored session data
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.clear()
+
+      // Force reload to clear all state
+      window.location.href = '/'
+
       return { error }
     } catch (error) {
-      console.error('❌ Sign out error:', error)
-      setSharedState(sharedUser, sharedUserProfile, false, `Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('❌ Sign out exception:', error)
+      // Even if there's an error, clear state and reload
+      setSharedState(null, null, false, null)
+      window.location.href = '/'
       return { error }
     }
   }

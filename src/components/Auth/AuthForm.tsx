@@ -94,14 +94,18 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         if (error) {
           throw error
         }
+        console.log('✅ Signup successful')
       } else {
         const { error } = await signIn(email, password)
         if (error) {
           throw error
         }
-        // User should now be automatically signed in after signup
-        console.log('✅ Signup successful, user should be logged in')
+        console.log('✅ Sign in successful')
       }
+
+      // Clear any URL parameters (like invitation tokens) after successful auth
+      window.history.replaceState({}, document.title, window.location.pathname)
+
       onSuccess()
     } catch (err: any) {
       setError(err.message)

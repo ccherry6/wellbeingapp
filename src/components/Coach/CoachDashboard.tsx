@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle, Book, Target, Activity, BarChart2, UserPlus } from 'lucide-react'
+import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle, Book, Target, Activity, BarChart2, UserPlus, Microscope } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { StudentOverview } from './StudentOverview'
 import { AnalyticsCharts } from './AnalyticsCharts'
@@ -12,6 +12,7 @@ import RiskScoring from './RiskScoring'
 import CorrelationAnalysis from './CorrelationAnalysis'
 import WeeklySummary from './WeeklySummary'
 import UserManagement from './UserManagement'
+import ResearchExport from './ResearchExport'
 import { BDCLogo } from '../BDCLogo'
 import { formatDateAEST } from '../../lib/dateUtils'
 import html2canvas from 'html2canvas'
@@ -28,7 +29,7 @@ interface Student {
 
 export function CoachDashboard() {
   const [students, setStudents] = useState<Student[]>([])
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users'>('overview')
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users' | 'research'>('overview')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -392,6 +393,20 @@ export function CoachDashboard() {
             <UserPlus className="w-4 h-4 inline mr-2" />
             User Management
           </button>
+          <button
+            onClick={() => {
+              setSelectedView('research')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'research'
+                ? 'bg-green-600 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Microscope className="w-4 h-4 inline mr-2" />
+            Research Export
+          </button>
         </div>
 
         {selectedView === 'overview' && (
@@ -412,6 +427,7 @@ export function CoachDashboard() {
         {selectedView === 'correlations' && <CorrelationAnalysis />}
         {selectedView === 'weekly' && <WeeklySummary />}
         {selectedView === 'users' && <UserManagement />}
+        {selectedView === 'research' && <ResearchExport />}
         {selectedView === 'deepdive' && selectedStudentId && (
           <StudentDeepDive
             studentId={selectedStudentId}

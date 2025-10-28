@@ -12,22 +12,24 @@ interface ResearchParticipant {
   program_year: number | null
 }
 
-interface WellbeingEntry {
+interface WellnessEntry {
   id: string
   user_id: string
-  date: string
+  entry_date: string
   mood: number
-  energy: number
+  energy_level: number
   sleep_hours: number
   sleep_quality: number
-  stress: number
-  motivation: number
+  stress_level: number
+  training_fatigue: number
   muscle_soreness: number
-  training_readiness: number
-  hrv_score: number | null
+  academic_pressure: number
+  relationship_satisfaction: number
+  program_belonging: number
+  hrv: number | null
   resting_heart_rate: number | null
-  injury_status: string | null
-  sickness_status: string | null
+  is_injured_or_sick: boolean | null
+  injury_sickness_notes: string | null
   notes: string | null
 }
 
@@ -44,17 +46,18 @@ interface ExportHistoryItem {
 
 const METRIC_FIELDS = [
   { id: 'mood', label: 'Mood', category: 'Wellbeing' },
-  { id: 'energy', label: 'Energy', category: 'Wellbeing' },
+  { id: 'energy_level', label: 'Energy Level', category: 'Wellbeing' },
   { id: 'sleep_hours', label: 'Sleep Hours', category: 'Sleep' },
   { id: 'sleep_quality', label: 'Sleep Quality', category: 'Sleep' },
-  { id: 'stress', label: 'Stress', category: 'Wellbeing' },
-  { id: 'motivation', label: 'Motivation', category: 'Wellbeing' },
+  { id: 'stress_level', label: 'Stress Level', category: 'Wellbeing' },
+  { id: 'training_fatigue', label: 'Training Fatigue', category: 'Physical' },
   { id: 'muscle_soreness', label: 'Muscle Soreness', category: 'Physical' },
-  { id: 'training_readiness', label: 'Training Readiness', category: 'Physical' },
-  { id: 'hrv_score', label: 'HRV Score', category: 'Biometric' },
+  { id: 'academic_pressure', label: 'Academic Pressure', category: 'Wellbeing' },
+  { id: 'relationship_satisfaction', label: 'Relationship Satisfaction', category: 'Wellbeing' },
+  { id: 'program_belonging', label: 'Program Belonging', category: 'Wellbeing' },
+  { id: 'hrv', label: 'HRV', category: 'Biometric' },
   { id: 'resting_heart_rate', label: 'Resting Heart Rate', category: 'Biometric' },
-  { id: 'injury_status', label: 'Injury Status', category: 'Health' },
-  { id: 'sickness_status', label: 'Sickness Status', category: 'Health' },
+  { id: 'is_injured_or_sick', label: 'Injured/Sick Status', category: 'Health' },
 ]
 
 export default function ResearchExport() {
@@ -170,31 +173,31 @@ export default function ResearchExport() {
 
     try {
       const { data: entries, error } = await supabase
-        .from('wellbeing_entries')
+        .from('wellness_entries')
         .select('*')
         .in('user_id', selectedParticipants)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: true })
+        .gte('entry_date', startDate)
+        .lte('entry_date', endDate)
+        .order('entry_date', { ascending: true })
 
       if (error) throw error
 
       const participantMap = new Map(participants.map(p => [p.id, p]))
 
       const csvRows: string[] = []
-      const headers = ['research_code', 'date', ...selectedFields]
+      const headers = ['research_code', 'entry_date', ...selectedFields]
       if (includeNotes) headers.push('notes')
       csvRows.push(headers.join(','))
 
-      entries.forEach((entry: WellbeingEntry) => {
+      entries.forEach((entry: WellnessEntry) => {
         const participant = participantMap.get(entry.user_id)
         if (!participant) return
 
         const row = [
           participant.research_code,
-          entry.date,
+          entry.entry_date,
           ...selectedFields.map(field => {
-            const value = entry[field as keyof WellbeingEntry]
+            const value = entry[field as keyof WellnessEntry]
             return value !== null && value !== undefined ? String(value) : ''
           })
         ]

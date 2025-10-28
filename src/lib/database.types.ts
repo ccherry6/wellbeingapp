@@ -61,6 +61,8 @@ export interface Database {
           wants_to_speak: boolean
           speak_to_who: string | null
           speak_to_email: string | null
+          hrv: number | null
+          resting_heart_rate: number | null
         }
         Insert: {
           id?: string
@@ -83,6 +85,8 @@ export interface Database {
           wants_to_speak?: boolean
           speak_to_who?: string | null
           speak_to_email?: string | null
+          hrv?: number | null
+          resting_heart_rate?: number | null
         }
         Update: {
           id?: string
@@ -105,6 +109,8 @@ export interface Database {
           wants_to_speak?: boolean
           speak_to_who?: string | null
           speak_to_email?: string | null
+          hrv?: number | null
+          resting_heart_rate?: number | null
         }
       }
       login_sessions: {

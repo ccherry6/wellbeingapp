@@ -25,7 +25,7 @@ window.addEventListener('unhandledrejection', function(event) {
   })
 })
 
-console.log('🔄 Starting Thrive application...')
+console.log('🔄 Starting BDC Thrive application...')
 console.log('🔄 Environment check:', {
   hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
   hasSupabaseKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,

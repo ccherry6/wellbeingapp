@@ -51,7 +51,7 @@ export function AnalyticsCharts() {
   const [radarData, setRadarData] = useState<RadarData[]>([])
   const [selectedMetric, setSelectedMetric] = useState('mood')
   const [selectedStudent, setSelectedStudent] = useState<string>('')
-  const [selectedView, setSelectedView] = useState<'trends' | 'radar' | 'comparison'>('trends')
+  const [selectedView, setSelectedView] = useState<'trends' | 'radar' | 'comparison' | 'individual' | 'biometrics'>('trends')
   const [timeRange, setTimeRange] = useState(7)
   const [loading, setLoading] = useState(true)
   const [visibleStudents, setVisibleStudents] = useState<Set<string>>(new Set())
@@ -176,6 +176,17 @@ export function AnalyticsCharts() {
               dayData[`${student.full_name}_${metric}`] = Math.round(values.reduce((a: number, b: number) => a + b, 0) / values.length * 10) / 10
             }
           })
+
+          // Add biometric data (HRV and resting heart rate)
+          const hrvValues = entries.map((e: any) => e.hrv).filter((v: any) => v !== null)
+          if (hrvValues.length > 0) {
+            dayData[`${student.full_name}_hrv`] = Math.round(hrvValues.reduce((a: number, b: number) => a + b, 0) / hrvValues.length * 10) / 10
+          }
+
+          const hrValues = entries.map((e: any) => e.resting_heart_rate).filter((v: any) => v !== null)
+          if (hrValues.length > 0) {
+            dayData[`${student.full_name}_resting_heart_rate`] = Math.round(hrValues.reduce((a: number, b: number) => a + b, 0) / hrValues.length * 10) / 10
+          }
         })
 
         return dayData
@@ -320,6 +331,17 @@ export function AnalyticsCharts() {
           >
             <Users className="w-4 h-4 inline mr-2" />
             All Students
+          </button>
+          <button
+            onClick={() => setSelectedView('biometrics')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'biometrics'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 inline mr-2" />
+            Biometric Data
           </button>
         </div>
       </div>
@@ -829,6 +851,187 @@ export function AnalyticsCharts() {
               <p>No data available for comparison</p>
             </div>
           )}
+        </div>
+      )}
+
+      {selectedView === 'biometrics' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">HRV (Heart Rate Variability) - All Students</h3>
+            {chartData.length > 0 && chartData.some(d => students.some(s => d[`${s.full_name}_hrv`] !== undefined)) ? (
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#6b7280"
+                      fontSize={12}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      fontSize={12}
+                      label={{ value: 'HRV (ms)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {students
+                      .filter(student => visibleStudents.has(student.id))
+                      .map(student => (
+                        <Line
+                          key={student.id}
+                          type="monotone"
+                          dataKey={`${student.full_name}_hrv`}
+                          stroke={student.color}
+                          strokeWidth={2}
+                          dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
+                          name={`${student.full_name} HRV`}
+                          connectNulls
+                        />
+                      ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No HRV data available for the selected time range</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Resting Heart Rate - All Students</h3>
+            {chartData.length > 0 && chartData.some(d => students.some(s => d[`${s.full_name}_resting_heart_rate`] !== undefined)) ? (
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#6b7280"
+                      fontSize={12}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      fontSize={12}
+                      label={{ value: 'Heart Rate (bpm)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {students
+                      .filter(student => visibleStudents.has(student.id))
+                      .map(student => (
+                        <Line
+                          key={student.id}
+                          type="monotone"
+                          dataKey={`${student.full_name}_resting_heart_rate`}
+                          stroke={student.color}
+                          strokeWidth={2}
+                          dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
+                          name={`${student.full_name} HR`}
+                          connectNulls
+                        />
+                      ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No resting heart rate data available for the selected time range</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Combined Biometric View - All Students</h3>
+            {chartData.length > 0 && chartData.some(d => students.some(s => d[`${s.full_name}_hrv`] !== undefined || d[`${s.full_name}_resting_heart_rate`] !== undefined)) ? (
+              <div className="h-[500px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#6b7280"
+                      fontSize={12}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      stroke="#06b6d4"
+                      fontSize={12}
+                      label={{ value: 'HRV (ms)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#f43f5e"
+                      fontSize={12}
+                      label={{ value: 'Heart Rate (bpm)', angle: 90, position: 'insideRight' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {students
+                      .filter(student => visibleStudents.has(student.id))
+                      .map(student => (
+                        <React.Fragment key={student.id}>
+                          <Line
+                            yAxisId="left"
+                            type="monotone"
+                            dataKey={`${student.full_name}_hrv`}
+                            stroke={student.color}
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
+                            name={`${student.full_name} HRV`}
+                            connectNulls
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey={`${student.full_name}_resting_heart_rate`}
+                            stroke={student.color}
+                            strokeWidth={2}
+                            dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
+                            name={`${student.full_name} HR`}
+                            connectNulls
+                          />
+                        </React.Fragment>
+                      ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No biometric data available for the selected time range</p>
+              </div>
+            )}
+            <div className="mt-4 text-sm text-gray-600 text-center">
+              <p>Dashed lines represent HRV (left axis), solid lines represent Resting Heart Rate (right axis)</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

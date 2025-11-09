@@ -57,9 +57,10 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
 
     const uniqueDates = [...new Set(data.map(e => e.entry_date))].sort().reverse()
 
-    let current = 0
-    let longest = 0
-    let temp = 0
+    let currentStreak = 0
+    let longestStreak = 0
+    let tempStreak = 0
+    let isCurrentStreakActive = false
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -71,10 +72,13 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
       if (i === 0) {
         const daysDiff = differenceInDays(today, entryDate)
         if (daysDiff === 0 || daysDiff === 1) {
-          temp = 1
-          current = 1
+          tempStreak = 1
+          currentStreak = 1
+          isCurrentStreakActive = true
         } else {
-          current = 0
+          currentStreak = 0
+          tempStreak = 1
+          isCurrentStreakActive = false
         }
       } else {
         const prevDate = parseISO(uniqueDates[i - 1])
@@ -82,19 +86,26 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
         const daysDiff = differenceInDays(prevDate, entryDate)
 
         if (daysDiff === 1) {
-          temp++
-          if (current > 0) current++
+          tempStreak++
+          if (isCurrentStreakActive) {
+            currentStreak++
+          }
         } else {
-          if (temp > longest) longest = temp
-          temp = 1
+          if (tempStreak > longestStreak) {
+            longestStreak = tempStreak
+          }
+          tempStreak = 1
+          isCurrentStreakActive = false
         }
       }
     }
 
-    if (temp > longest) longest = temp
+    if (tempStreak > longestStreak) {
+      longestStreak = tempStreak
+    }
 
-    setCurrentStreak(current)
-    setLongestStreak(Math.max(longest, current))
+    setCurrentStreak(currentStreak)
+    setLongestStreak(Math.max(longestStreak, currentStreak))
   }
 
   const calculateMonthlyCheckIns = (data: WellnessEntry[]) => {

@@ -285,7 +285,9 @@ export function AnalyticsCharts() {
     { key: 'muscle_soreness', label: 'Muscle Soreness', color: '#f59e0b' },
     { key: 'academic_pressure', label: 'Academic Pressure', color: '#3b82f6' },
     { key: 'relationship_satisfaction', label: 'Relationships', color: '#10b981' },
-    { key: 'program_belonging', label: 'Program Belonging', color: '#6366f1' }
+    { key: 'program_belonging', label: 'Program Belonging', color: '#6366f1' },
+    { key: 'hrv', label: 'HRV', color: '#06b6d4' },
+    { key: 'resting_heart_rate', label: 'Resting Heart Rate', color: '#f43f5e' }
   ]
 
   if (loading) {
@@ -841,10 +843,20 @@ export function AnalyticsCharts() {
                           stroke="#6b7280"
                           fontSize={10}
                         />
-                        <YAxis 
-                          domain={metric.key === 'sleep_hours' ? [0, 12] : [0, 10]}
+                        <YAxis
+                          domain={
+                            metric.key === 'sleep_hours' ? [0, 12] :
+                            metric.key === 'hrv' ? [0, 'auto'] :
+                            metric.key === 'resting_heart_rate' ? [0, 'auto'] :
+                            [0, 10]
+                          }
                           stroke="#6b7280"
                           fontSize={10}
+                          label={
+                            metric.key === 'hrv' ? { value: 'ms', angle: -90, position: 'insideLeft' } :
+                            metric.key === 'resting_heart_rate' ? { value: 'bpm', angle: -90, position: 'insideLeft' } :
+                            undefined
+                          }
                         />
                         <Tooltip 
                           contentStyle={{

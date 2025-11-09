@@ -15,6 +15,8 @@ interface ProgressData {
   program_belonging: number
   hrv: number | null
   resting_heart_rate: number | null
+  hrv_avg: number | null
+  resting_heart_rate_avg: number | null
 }
 
 export function StudentProgress() {
@@ -43,17 +45,43 @@ export function StudentProgress() {
 
       if (error) throw error
 
-      const chartData = data.map(response => ({
-        date: format(new Date(response.created_at), 'MMM dd'),
-        sleep_quality: response.sleep_quality,
-        energy_level: response.energy_level,
-        mood: response.mood,
-        stress_level: response.stress_level,
-        training_fatigue: response.training_fatigue,
-        program_belonging: response.program_belonging,
-        hrv: response.hrv,
-        resting_heart_rate: response.resting_heart_rate
-      }))
+      const chartData = data.map((response, index) => {
+        // Calculate 7-day rolling average for HRV
+        let hrvAvg = null
+        if (response.hrv !== null) {
+          const startIdx = Math.max(0, index - 6)
+          const recentEntries = data.slice(startIdx, index + 1)
+          const hrvValues = recentEntries.map(e => e.hrv).filter(v => v !== null)
+          if (hrvValues.length > 0) {
+            hrvAvg = Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
+          }
+        }
+
+        // Calculate 7-day rolling average for resting heart rate
+        let hrAvg = null
+        if (response.resting_heart_rate !== null) {
+          const startIdx = Math.max(0, index - 6)
+          const recentEntries = data.slice(startIdx, index + 1)
+          const hrValues = recentEntries.map(e => e.resting_heart_rate).filter(v => v !== null)
+          if (hrValues.length > 0) {
+            hrAvg = Math.round(hrValues.reduce((a, b) => a + b, 0) / hrValues.length)
+          }
+        }
+
+        return {
+          date: format(new Date(response.created_at), 'MMM dd'),
+          sleep_quality: response.sleep_quality,
+          energy_level: response.energy_level,
+          mood: response.mood,
+          stress_level: response.stress_level,
+          training_fatigue: response.training_fatigue,
+          program_belonging: response.program_belonging,
+          hrv: response.hrv,
+          resting_heart_rate: response.resting_heart_rate,
+          hrv_avg: hrvAvg,
+          resting_heart_rate_avg: hrAvg
+        }
+      })
 
       setProgressData(chartData)
     } catch (error) {
@@ -216,9 +244,20 @@ export function StudentProgress() {
                       type="monotone"
                       dataKey="hrv"
                       stroke="#06b6d4"
+                      strokeWidth={2}
+                      dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                      name="HRV (Daily)"
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="hrv_avg"
+                      stroke="#0891b2"
                       strokeWidth={3}
-                      dot={{ fill: '#06b6d4', strokeWidth: 2, r: 5 }}
-                      name="HRV"
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="HRV (7-Day Avg)"
                       connectNulls
                     />
                     <Line
@@ -226,9 +265,20 @@ export function StudentProgress() {
                       type="monotone"
                       dataKey="resting_heart_rate"
                       stroke="#f43f5e"
+                      strokeWidth={2}
+                      dot={{ fill: '#f43f5e', strokeWidth: 2, r: 4 }}
+                      name="Resting HR (Daily)"
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="resting_heart_rate_avg"
+                      stroke="#dc2626"
                       strokeWidth={3}
-                      dot={{ fill: '#f43f5e', strokeWidth: 2, r: 5 }}
-                      name="Resting Heart Rate"
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Resting HR (7-Day Avg)"
                       connectNulls
                     />
                   </LineChart>

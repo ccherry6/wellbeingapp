@@ -159,7 +159,7 @@ export function AnalyticsCharts() {
       // Calculate daily averages for each student
       const chartData = Object.entries(groupedByDate).map(([date, studentEntries]) => {
         const dayData: any = { date }
-        
+
         Object.entries(studentEntries).forEach(([studentId, entries]) => {
           const student = studentsWithColors.find(s => s.id === studentId)
           if (!student) return
@@ -192,7 +192,37 @@ export function AnalyticsCharts() {
         return dayData
       })
 
-      setChartData(chartData)
+      // Calculate 7-day rolling averages for biometric data
+      const chartDataWithAvg = chartData.map((dayData, index) => {
+        const enhanced: any = { ...dayData }
+
+        studentsWithColors.forEach(student => {
+          // Calculate 7-day average for HRV
+          const startIdx = Math.max(0, index - 6)
+          const recentDays = chartData.slice(startIdx, index + 1)
+
+          const hrvValues = recentDays
+            .map(d => d[`${student.full_name}_hrv`])
+            .filter(v => v !== undefined && v !== null)
+
+          if (hrvValues.length > 0) {
+            enhanced[`${student.full_name}_hrv_avg`] = Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length * 10) / 10
+          }
+
+          // Calculate 7-day average for resting heart rate
+          const hrValues = recentDays
+            .map(d => d[`${student.full_name}_resting_heart_rate`])
+            .filter(v => v !== undefined && v !== null)
+
+          if (hrValues.length > 0) {
+            enhanced[`${student.full_name}_resting_heart_rate_avg`] = Math.round(hrValues.reduce((a, b) => a + b, 0) / hrValues.length * 10) / 10
+          }
+        })
+
+        return enhanced
+      })
+
+      setChartData(chartDataWithAvg)
 
       // Process data for radar chart - calculate overall averages per student
       const radarMetrics = [
@@ -884,18 +914,29 @@ export function AnalyticsCharts() {
                     <Legend />
                     {students
                       .filter(student => visibleStudents.has(student.id))
-                      .map(student => (
+                      .flatMap(student => [
                         <Line
-                          key={student.id}
+                          key={`${student.id}_hrv`}
                           type="monotone"
                           dataKey={`${student.full_name}_hrv`}
                           stroke={student.color}
                           strokeWidth={2}
-                          dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
-                          name={`${student.full_name} HRV`}
+                          dot={{ fill: student.color, strokeWidth: 2, r: 3 }}
+                          name={`${student.full_name} HRV (Daily)`}
+                          connectNulls
+                        />,
+                        <Line
+                          key={`${student.id}_hrv_avg`}
+                          type="monotone"
+                          dataKey={`${student.full_name}_hrv_avg`}
+                          stroke={student.color}
+                          strokeWidth={3}
+                          strokeDasharray="5 5"
+                          dot={false}
+                          name={`${student.full_name} HRV (7-Day Avg)`}
                           connectNulls
                         />
-                      ))}
+                      ])}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -935,18 +976,29 @@ export function AnalyticsCharts() {
                     <Legend />
                     {students
                       .filter(student => visibleStudents.has(student.id))
-                      .map(student => (
+                      .flatMap(student => [
                         <Line
-                          key={student.id}
+                          key={`${student.id}_hr`}
                           type="monotone"
                           dataKey={`${student.full_name}_resting_heart_rate`}
                           stroke={student.color}
                           strokeWidth={2}
-                          dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
-                          name={`${student.full_name} HR`}
+                          dot={{ fill: student.color, strokeWidth: 2, r: 3 }}
+                          name={`${student.full_name} HR (Daily)`}
+                          connectNulls
+                        />,
+                        <Line
+                          key={`${student.id}_hr_avg`}
+                          type="monotone"
+                          dataKey={`${student.full_name}_resting_heart_rate_avg`}
+                          stroke={student.color}
+                          strokeWidth={3}
+                          strokeDasharray="5 5"
+                          dot={false}
+                          name={`${student.full_name} HR (7-Day Avg)`}
                           connectNulls
                         />
-                      ))}
+                      ])}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -1001,10 +1053,21 @@ export function AnalyticsCharts() {
                             type="monotone"
                             dataKey={`${student.full_name}_hrv`}
                             stroke={student.color}
-                            strokeWidth={2}
+                            strokeWidth={1.5}
+                            dot={{ fill: student.color, strokeWidth: 1, r: 3 }}
+                            name={`${student.full_name} HRV (Daily)`}
+                            connectNulls
+                            opacity={0.5}
+                          />
+                          <Line
+                            yAxisId="left"
+                            type="monotone"
+                            dataKey={`${student.full_name}_hrv_avg`}
+                            stroke={student.color}
+                            strokeWidth={3}
                             strokeDasharray="5 5"
-                            dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
-                            name={`${student.full_name} HRV`}
+                            dot={false}
+                            name={`${student.full_name} HRV (7-Day Avg)`}
                             connectNulls
                           />
                           <Line
@@ -1012,9 +1075,20 @@ export function AnalyticsCharts() {
                             type="monotone"
                             dataKey={`${student.full_name}_resting_heart_rate`}
                             stroke={student.color}
-                            strokeWidth={2}
-                            dot={{ fill: student.color, strokeWidth: 2, r: 4 }}
-                            name={`${student.full_name} HR`}
+                            strokeWidth={1.5}
+                            dot={{ fill: student.color, strokeWidth: 1, r: 3 }}
+                            name={`${student.full_name} HR (Daily)`}
+                            connectNulls
+                            opacity={0.5}
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey={`${student.full_name}_resting_heart_rate_avg`}
+                            stroke={student.color}
+                            strokeWidth={3}
+                            dot={false}
+                            name={`${student.full_name} HR (7-Day Avg)`}
                             connectNulls
                           />
                         </React.Fragment>
@@ -1029,7 +1103,7 @@ export function AnalyticsCharts() {
               </div>
             )}
             <div className="mt-4 text-sm text-gray-600 text-center">
-              <p>Dashed lines represent HRV (left axis), solid lines represent Resting Heart Rate (right axis)</p>
+              <p>Daily values shown with lighter lines and dots. 7-day rolling averages shown with thicker dashed lines (HRV on left axis, HR on right axis)</p>
             </div>
           </div>
         </div>

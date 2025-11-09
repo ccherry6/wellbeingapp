@@ -540,7 +540,7 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
               You've already completed your daily wellbeing check-in for today. Come back tomorrow!
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => onSuccess?.()}
               className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium"
             >
               View Your Progress

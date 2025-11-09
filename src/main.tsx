@@ -55,13 +55,14 @@ try {
 } catch (error) {
   console.error('❌ Critical error during React initialization:', error)
   // Fallback error display
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error'
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6; font-family: system-ui;">
       <div style="background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px;">
         <h1 style="color: #dc2626; margin-bottom: 1rem;">Application Error</h1>
         <p style="color: #374151; margin-bottom: 1rem;">Failed to start the application. Please check the console for details.</p>
-        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
-        <p style="color: #6b7280; font-size: 0.75rem; margin-bottom: 1rem;">Check browser console (F12 or Cmd+Option+C) for detailed error information</p>
+        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Error: ${errorMessage}</p>
+        <p style="color: #6b7280; font-size: 0.75rem; margin-bottom: 1rem;">Check browser console for detailed error information</p>
         <button onclick="window.location.reload()" style="background: #dc2626; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer;">
           Reload Page
         </button>

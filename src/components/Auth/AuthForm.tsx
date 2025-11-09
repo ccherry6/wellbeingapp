@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { Mail, Lock, User, Trophy, QrCode } from 'lucide-react'
-import QRCode from 'react-qr-code'
+import { Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { QRLogin } from './QRLogin'
 import { BDCLogo } from '../BDCLogo'
 
 interface AuthFormProps {
@@ -11,8 +9,6 @@ interface AuthFormProps {
 
 export function AuthForm({ onSuccess }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false)
-  const [showQRLogin, setShowQRLogin] = useState(false)
-  const [showPublicQR, setShowPublicQR] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -69,8 +65,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   // Registration code - you can change this to whatever you want
   const VALID_REGISTRATION_CODE = 'BDC2026'
 
-  // Generate a public demo token
-  const publicDemoToken = 'demo-login-2025'
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -114,60 +108,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     }
   }
 
-  if (showQRLogin) {
-    return <QRLogin onBack={() => setShowQRLogin(false)} onSuccess={onSuccess} />
-  }
-
-  if (showPublicQR) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <BDCLogo className="h-20 w-auto" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Public Demo Access
-            </h1>
-            <p className="text-gray-600">
-              Scan this QR code to access the demo
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-            <QRCode
-              value={publicDemoToken}
-              size={200}
-              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-            />
-          </div>
-
-          <div className="text-center mb-6">
-            <p className="text-sm text-gray-600 mb-2">Demo Token:</p>
-            <code className="bg-gray-100 px-3 py-2 rounded text-sm font-mono">
-              {publicDemoToken}
-            </code>
-          </div>
-
-          <button
-            onClick={() => setShowPublicQR(false)}
-            className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-          >
-            Back to Login
-          </button>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-900 mb-2">Demo Access:</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Scan QR code or enter token manually</li>
-              <li>• Access demo student account</li>
-              <li>• Try all wellbeing features</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    )
-  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
@@ -184,27 +124,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           <p className="text-gray-600">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <button
-            onClick={() => setShowPublicQR(true)}
-            className="bg-green-100 text-green-900 py-3 px-2 rounded-lg font-medium hover:bg-green-200 transition-colors flex flex-col items-center justify-center text-xs"
-          >
-            <QrCode className="w-4 h-4 mb-1" />
-            Demo QR
-          </button>
-          <button
-            onClick={() => setShowQRLogin(true)}
-            className="bg-blue-100 text-blue-900 py-3 px-2 rounded-lg font-medium hover:bg-blue-200 transition-colors flex flex-col items-center justify-center text-xs"
-          >
-            <QrCode className="w-4 h-4 mb-1" />
-            QR Login
-          </button>
-          <div className="bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-medium flex flex-col items-center justify-center text-xs">
-            <Mail className="w-4 h-4 mb-1" />
-            Email Login
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

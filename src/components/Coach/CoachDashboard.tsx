@@ -3,7 +3,6 @@ import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle
 import { supabase } from '../../lib/supabase'
 import { StudentOverview } from './StudentOverview'
 import { AnalyticsCharts } from './AnalyticsCharts'
-import { QRGenerator } from './QRGenerator'
 import { AlertHistory } from './AlertHistory'
 import { StudentDeepDive } from './StudentDeepDive'
 import { ContactFollowUp } from './ContactFollowUp'
@@ -29,7 +28,7 @@ interface Student {
 
 export function CoachDashboard() {
   const [students, setStudents] = useState<Student[]>([])
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'qr' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users' | 'research'>('overview')
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users' | 'research'>('overview')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -297,20 +296,6 @@ export function CoachDashboard() {
           </button>
           <button
             onClick={() => {
-              setSelectedView('qr')
-              setSelectedStudentId(null)
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              selectedView === 'qr'
-                ? 'bg-blue-900 text-white'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            }`}
-          >
-            <Calendar className="w-4 h-4 inline mr-2" />
-            QR Codes
-          </button>
-          <button
-            onClick={() => {
               setSelectedView('contacts')
               setSelectedStudentId(null)
             }}
@@ -420,7 +405,6 @@ export function CoachDashboard() {
         )}
         {selectedView === 'analytics' && <AnalyticsCharts />}
         {selectedView === 'alerts' && <AlertHistory />}
-        {selectedView === 'qr' && <QRGenerator />}
         {selectedView === 'contacts' && <ContactFollowUp />}
         {selectedView === 'resources' && <ResourceManagement />}
         {selectedView === 'risk' && <RiskScoring />}

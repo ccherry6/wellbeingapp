@@ -214,103 +214,6 @@ export function useAuth() {
     }
   }
 
-  const signInWithQR = async (sessionToken: string) => {
-    try {
-      console.log('🔄 QR login attempt with token:', sessionToken.substring(0, 8) + '...')
-
-      if (sessionToken === 'demo-login-2025') {
-        console.log('🎭 Demo login detected')
-        const demoUserId = 'demo-user-id'
-
-        let { data: existingProfile, error: fetchError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', demoUserId)
-          .single()
-
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          throw new Error('Error checking demo user')
-        }
-
-        if (!existingProfile) {
-          const { data: newProfile, error: insertError } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: demoUserId,
-              email: 'demo@student.edu',
-              full_name: 'Demo Student',
-              student_id: 'DEMO001',
-              sport: 'Swimming',
-              role: 'student',
-              program_year: 2
-            })
-            .select()
-            .single()
-
-          if (insertError) {
-            console.error('❌ Error creating demo profile:', insertError)
-            throw new Error('Failed to create demo user')
-          }
-          existingProfile = newProfile
-        }
-
-        setSharedState({
-          id: existingProfile.id,
-          email: existingProfile.email,
-          created_at: existingProfile.created_at
-        } as User, existingProfile, false, null)
-
-        console.log('✅ Demo login successful')
-        return { data: { user: existingProfile }, error: null }
-      }
-
-      const { data: session, error: sessionError } = await supabase
-        .from('login_sessions')
-        .select('*')
-        .eq('qr_code', sessionToken)
-        .eq('is_used', false)
-        .single()
-
-      if (sessionError || !session) {
-        throw new Error('Invalid or expired QR code')
-      }
-
-      if (new Date(session.expires_at) < new Date()) {
-        throw new Error('QR code has expired')
-      }
-
-      if (!session.user_id) {
-        throw new Error('QR session not linked to a user')
-      }
-
-      await supabase
-        .from('login_sessions')
-        .update({ is_used: true })
-        .eq('qr_code', sessionToken)
-
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', session.user_id)
-        .single()
-
-      if (profileError || !profile) {
-        throw new Error('User profile not found')
-      }
-
-      setSharedState({
-        id: profile.id,
-        email: profile.email,
-        created_at: profile.created_at
-      } as User, profile, false, null)
-
-      console.log('✅ QR login successful')
-      return { data: { user: profile }, error: null }
-    } catch (error: any) {
-      console.error('❌ QR login failed:', error)
-      return { data: null, error }
-    }
-  }
 
   const switchRole = async (newRole: 'student' | 'coach') => {
     if (!user || !userProfile) {
@@ -384,7 +287,6 @@ export function useAuth() {
     error,
     signUp,
     signIn,
-    signInWithQR,
     switchRole,
     signOut
   }

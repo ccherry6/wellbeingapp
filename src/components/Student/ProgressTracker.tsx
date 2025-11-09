@@ -1,10 +1,28 @@
 import React, { useState, useEffect } from 'react'
-import { Flame, Award, TrendingUp, Calendar, Target, Star } from 'lucide-react'
+import { Flame, Award, TrendingUp, Calendar, Target, Star, X, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, Activity } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { format, parseISO, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns'
 
 interface WellnessEntry {
   entry_date: string
+  created_at: string
+}
+
+interface WellnessEntryDetail {
+  entry_date: string
+  sleep_quality: number
+  sleep_hours: number
+  energy_level: number
+  training_fatigue: number
+  muscle_soreness: number
+  mood: number
+  stress_level: number
+  academic_pressure: number
+  relationship_satisfaction: number
+  program_belonging: number
+  notes: string
+  hrv: number | null
+  resting_heart_rate: number | null
   created_at: string
 }
 
@@ -19,6 +37,9 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
   const [longestStreak, setLongestStreak] = useState(0)
   const [totalCheckIns, setTotalCheckIns] = useState(0)
   const [thisMonthCheckIns, setThisMonthCheckIns] = useState(0)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedEntry, setSelectedEntry] = useState<WellnessEntryDetail | null>(null)
+  const [loadingEntry, setLoadingEntry] = useState(false)
 
   useEffect(() => {
     fetchProgress()
@@ -119,6 +140,32 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
     })
 
     setThisMonthCheckIns(thisMonth.length)
+  }
+
+  const fetchEntryForDate = async (date: string) => {
+    try {
+      setLoadingEntry(true)
+      const { data, error } = await supabase
+        .from('wellness_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('entry_date', date)
+        .maybeSingle()
+
+      if (error) throw error
+
+      setSelectedEntry(data)
+      setSelectedDate(date)
+    } catch (error) {
+      console.error('Error fetching entry:', error)
+    } finally {
+      setLoadingEntry(false)
+    }
+  }
+
+  const closeModal = () => {
+    setSelectedDate(null)
+    setSelectedEntry(null)
   }
 
   const getStreakMessage = () => {
@@ -305,7 +352,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
               tooltipText = 'Future date'
             } else if (hasEntry) {
               statusClasses = 'bg-green-500 text-white shadow-md hover:shadow-lg hover:scale-105 cursor-pointer'
-              tooltipText = `Checked in on ${format(day.date, 'MMMM d, yyyy')}`
+              tooltipText = `Checked in on ${format(day.date, 'MMMM d, yyyy')} - Click to view`
             } else if (isToday) {
               statusClasses = 'bg-blue-500 text-white border-2 border-blue-700 font-bold ring-2 ring-blue-300'
               tooltipText = `Today - ${format(day.date, 'MMMM d, yyyy')}`
@@ -315,13 +362,15 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
             }
 
             return (
-              <div
+              <button
                 key={idx}
                 className={`${baseClasses} ${statusClasses}`}
                 title={tooltipText}
+                onClick={() => hasEntry && fetchEntryForDate(format(day.date, 'yyyy-MM-dd'))}
+                disabled={!hasEntry}
               >
                 {format(day.date, 'd')}
-              </div>
+              </button>
             )
           })}
         </div>
@@ -355,6 +404,152 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
           </div>
         </div>
       )}
+
+      {selectedDate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={closeModal}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Check-in Details - {format(parseISO(selectedDate), 'MMMM d, yyyy')}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {loadingEntry ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+                </div>
+              ) : selectedEntry ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <MetricCard
+                      icon={Moon}
+                      label="Sleep Quality"
+                      value={selectedEntry.sleep_quality}
+                      color="bg-indigo-50 text-indigo-600"
+                    />
+                    <MetricCard
+                      icon={Moon}
+                      label="Sleep Hours"
+                      value={selectedEntry.sleep_hours}
+                      color="bg-indigo-50 text-indigo-600"
+                      suffix="hrs"
+                    />
+                    <MetricCard
+                      icon={Zap}
+                      label="Energy Level"
+                      value={selectedEntry.energy_level}
+                      color="bg-yellow-50 text-yellow-600"
+                    />
+                    <MetricCard
+                      icon={Dumbbell}
+                      label="Training Fatigue"
+                      value={selectedEntry.training_fatigue}
+                      color="bg-orange-50 text-orange-600"
+                    />
+                    <MetricCard
+                      icon={Heart}
+                      label="Muscle Soreness"
+                      value={selectedEntry.muscle_soreness}
+                      color="bg-red-50 text-red-600"
+                    />
+                    <MetricCard
+                      icon={Brain}
+                      label="Mood"
+                      value={selectedEntry.mood}
+                      color="bg-pink-50 text-pink-600"
+                    />
+                    <MetricCard
+                      icon={Brain}
+                      label="Stress Level"
+                      value={selectedEntry.stress_level}
+                      color="bg-purple-50 text-purple-600"
+                    />
+                    <MetricCard
+                      icon={Trophy}
+                      label="Academic Pressure"
+                      value={selectedEntry.academic_pressure}
+                      color="bg-blue-50 text-blue-600"
+                    />
+                    <MetricCard
+                      icon={Users}
+                      label="Relationship Satisfaction"
+                      value={selectedEntry.relationship_satisfaction}
+                      color="bg-green-50 text-green-600"
+                    />
+                    <MetricCard
+                      icon={MessageCircle}
+                      label="Program Belonging"
+                      value={selectedEntry.program_belonging}
+                      color="bg-teal-50 text-teal-600"
+                    />
+                    {selectedEntry.hrv && (
+                      <MetricCard
+                        icon={Activity}
+                        label="HRV"
+                        value={selectedEntry.hrv}
+                        color="bg-cyan-50 text-cyan-600"
+                        suffix="ms"
+                      />
+                    )}
+                    {selectedEntry.resting_heart_rate && (
+                      <MetricCard
+                        icon={Activity}
+                        label="Resting Heart Rate"
+                        value={selectedEntry.resting_heart_rate}
+                        color="bg-cyan-50 text-cyan-600"
+                        suffix="bpm"
+                      />
+                    )}
+                  </div>
+
+                  {selectedEntry.notes && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h3 className="font-semibold text-gray-900 mb-2">Additional Notes</h3>
+                      <p className="text-gray-700 whitespace-pre-wrap">{selectedEntry.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-500 text-center pt-4 border-t border-gray-200">
+                    Submitted at {format(parseISO(selectedEntry.created_at), 'h:mm a')}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-600">
+                  No data found for this date
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MetricCard({ icon: Icon, label, value, color, suffix }: {
+  icon: React.ElementType
+  label: string
+  value: number
+  color: string
+  suffix?: string
+}) {
+  return (
+    <div className={`${color} rounded-lg p-4 border border-gray-200`}>
+      <div className="flex items-center mb-2">
+        <Icon className="w-5 h-5 mr-2" />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <div className="text-2xl font-bold">
+        {value}{suffix && <span className="text-lg ml-1">{suffix}</span>}
+      </div>
+      <div className="text-xs text-gray-600 mt-1">out of 10</div>
     </div>
   )
 }

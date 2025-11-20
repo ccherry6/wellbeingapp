@@ -271,6 +271,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
             Your Progress
           </h2>
           <p className="text-gray-600 mt-1">Track your wellness journey</p>
+          <p className="text-xs text-blue-600 mt-1 italic">Streaks are fun, but never required - participation is always voluntary</p>
         </div>
       </div>
 

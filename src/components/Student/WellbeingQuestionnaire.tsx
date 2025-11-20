@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Save, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, ChevronDown, AlertTriangle, Activity } from 'lucide-react'
+import { Save, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, ChevronDown, AlertTriangle, Activity, Info, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { BDCLogo } from '../BDCLogo'
@@ -101,9 +101,11 @@ const questions = [
 
 interface WellbeingQuestionnaireProps {
   onSuccess?: () => void
+  onSkip?: () => void
 }
 
-export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProps) {
+export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionnaireProps) {
+  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false)
   const { user } = useAuth()
   const [profile, setProfile] = useState<any>(null)
   const [responses, setResponses] = useState<Record<string, number>>({
@@ -536,9 +538,14 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Already Checked In Today
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-2">
               You've already completed your daily wellbeing check-in for today. Come back tomorrow!
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 max-w-md mx-auto">
+              <p className="text-xs text-blue-800">
+                <strong>Remember:</strong> You can always skip a day - participation is voluntary! Your wellbeing matters, and checking in is here to support you.
+              </p>
+            </div>
             <button
               onClick={() => onSuccess?.()}
               className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium"
@@ -565,6 +572,62 @@ export function WellbeingQuestionnaire({ onSuccess }: WellbeingQuestionnaireProp
             Help us understand how you're feeling today
           </p>
         </div>
+
+        <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-2 flex-1">
+              <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-blue-900 font-medium mb-1">
+                  Reminder: Participation is completely voluntary
+                </p>
+                <p className="text-xs text-blue-800">
+                  You can skip today's check-in if you prefer. There are no consequences, and your position in the HPP squad is not affected.
+                </p>
+              </div>
+            </div>
+            {onSkip && (
+              <button
+                type="button"
+                onClick={() => setShowSkipConfirmation(true)}
+                className="ml-2 text-blue-600 hover:text-blue-800 text-sm font-medium whitespace-nowrap flex items-center space-x-1 flex-shrink-0"
+              >
+                <XCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Skip today</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showSkipConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">
+                Skip today's check-in?
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to skip? Your current progress won't be saved.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowSkipConfirmation(false)
+                    onSkip?.()
+                  }}
+                  className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                >
+                  Yes, skip
+                </button>
+                <button
+                  onClick={() => setShowSkipConfirmation(false)}
+                  className="flex-1 bg-blue-900 text-white py-2 px-4 rounded-lg hover:bg-blue-800 transition-colors font-medium"
+                >
+                  Continue check-in
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {error && (

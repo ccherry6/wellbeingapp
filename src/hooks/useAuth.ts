@@ -217,25 +217,35 @@ export function useAuth() {
 
   const switchRole = async (newRole: 'student' | 'coach') => {
     if (!user || !userProfile) {
-      console.log('❌ Cannot switch role: no user or profile')
+      const errorMsg = 'Cannot switch role: no user or profile'
+      console.log('❌', errorMsg)
+      alert(`Error: ${errorMsg}`)
       return
     }
 
     if (userProfile.actual_role !== 'coach' && userProfile.actual_role !== 'admin') {
-      console.log('❌ Role switching not allowed for this user')
+      const errorMsg = 'Role switching not allowed for this user'
+      console.log('❌', errorMsg)
+      alert(`Error: ${errorMsg}`)
       return
     }
 
     try {
       console.log('🔄 Switching view from', userProfile.role, 'to', newRole)
+      console.log('🔄 User ID:', user.id)
+      console.log('🔄 Actual role:', userProfile.actual_role)
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
         .eq('id', user.id)
+        .select()
+
+      console.log('🔄 Update result:', { data, error })
 
       if (error) {
         console.error('❌ Role switch database error:', error)
+        alert(`Database error: ${error.message}\nCode: ${error.code}\nDetails: ${error.details}`)
         throw error
       }
 
@@ -243,7 +253,9 @@ export function useAuth() {
       window.location.reload()
     } catch (error) {
       console.error('❌ Error switching role:', error)
-      setSharedState(sharedUser, sharedUserProfile, false, `Role switch failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Role switch failed: ${errorMsg}`)
+      setSharedState(sharedUser, sharedUserProfile, false, `Role switch failed: ${errorMsg}`)
     }
   }
 

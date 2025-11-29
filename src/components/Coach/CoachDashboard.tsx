@@ -125,13 +125,15 @@ export function CoachDashboard() {
         ].map(field => `"${field}"`).join(','))
       ].join('\n')
 
-      const blob = new Blob([csvContent], { type: 'text/csv' })
-      const url = window.URL.createObjectURL(blob)
+      // Use data URI for better mobile compatibility
+      const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
       const a = document.createElement('a')
-      a.href = url
+      a.href = dataUri
       a.download = `wellbeing-data-${new Date().toISOString().split('T')[0]}.csv`
+      a.style.display = 'none'
+      document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error) {
       alert('Error exporting data. Please try again.')
     }

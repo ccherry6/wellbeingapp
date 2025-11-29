@@ -156,13 +156,15 @@ ${summary.improvements.map(i => `- ${i}`).join('\n')}
 Generated: ${new Date().toLocaleString()}
     `.trim()
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = window.URL.createObjectURL(blob)
+    // Use data URI for better mobile compatibility
+    const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(report)
     const a = document.createElement('a')
-    a.href = url
+    a.href = dataUri
     a.download = `weekly-summary-${summary.weekStart}-${summary.weekEnd}.txt`
+    a.style.display = 'none'
+    document.body.appendChild(a)
     a.click()
-    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
   }
 
   const getScoreColor = (score: number, isInverse: boolean = false) => {

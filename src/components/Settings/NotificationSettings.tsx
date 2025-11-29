@@ -10,7 +10,8 @@ export function NotificationSettings() {
     settings,
     requestPermission,
     updateNotificationSettings,
-    sendTestNotification
+    sendTestNotification,
+    isMobileApp
   } = useNotifications()
   const { user } = useAuth()
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
@@ -102,7 +103,8 @@ export function NotificationSettings() {
       </div>
 
       <div className="space-y-6">
-        {/* Permission Status */}
+        {/* Permission Status - Hide browser notifications on mobile */}
+        {!isMobileApp && (
         <div className="p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
@@ -171,6 +173,7 @@ export function NotificationSettings() {
             </label>
           </div>
         </div>
+        )}
 
         {/* Notification Time */}
         <div className="p-4 rounded-lg border border-gray-200">
@@ -213,8 +216,8 @@ export function NotificationSettings() {
           </p>
         </div>
 
-        {/* Test Browser Notification */}
-        {permission === 'granted' && (
+        {/* Test Browser Notification - Only show on web */}
+        {!isMobileApp && permission === 'granted' && (
           <div className="p-4 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -263,12 +266,16 @@ export function NotificationSettings() {
       <div className="mt-6 p-4 bg-blue-50 rounded-lg">
         <h3 className="font-medium text-blue-900 mb-2">How Daily Reminders Work:</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Notifications are sent at your chosen time each day</li>
+          <li>• Email reminders are sent at your chosen time each day</li>
           <li>• Only sent if you haven't completed your daily check-in yet</li>
-          <li>• Browser notifications appear even when the app is closed</li>
-          <li>• Click the notification to open the app directly</li>
-          <li>• Notifications stop once you complete your daily questionnaire</li>
-          <li>• Use the test button to verify notifications are working</li>
+          <li>• Reminders stop once you complete your daily questionnaire</li>
+          <li>• Use the test button to verify email delivery</li>
+          {!isMobileApp && (
+            <>
+              <li>• Browser notifications can also be enabled for instant alerts</li>
+              <li>• Browser notifications appear even when the app is closed</li>
+            </>
+          )}
         </ul>
       </div>
     </div>

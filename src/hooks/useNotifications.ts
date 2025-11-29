@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
 import { supabase } from '../lib/supabase'
+import { Capacitor } from '@capacitor/core'
 
 interface NotificationSettings {
   browser_notifications: boolean
@@ -16,6 +17,7 @@ export function useNotifications() {
     email_notifications: true,
     notification_time: '08:00'
   })
+  const isMobileApp = Capacitor.isNativePlatform()
 
   useEffect(() => {
     // Check current notification permission
@@ -232,6 +234,7 @@ export function useNotifications() {
     requestPermission,
     updateNotificationSettings,
     sendTestNotification,
-    checkAndSendNotification
+    checkAndSendNotification,
+    isMobileApp
   }
 }

@@ -211,14 +211,15 @@ export default function ResearchExport() {
       })
 
       const csvContent = csvRows.join('\n')
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
 
+      // Use data URI for better mobile compatibility
+      const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
+      const link = document.createElement('a')
       const filename = `research_export_${startDate}_to_${endDate}_${new Date().getTime()}.csv`
-      link.setAttribute('href', url)
+
+      link.setAttribute('href', dataUri)
       link.setAttribute('download', filename)
-      link.style.visibility = 'hidden'
+      link.style.display = 'none'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

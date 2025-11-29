@@ -98,8 +98,8 @@ export function StudentDashboard() {
             Welcome to your Wellbeing Hub
           </h1>
           <img
-            src="/BDC Logo.jpg"
-            alt="BDC Logo"
+            src="/Thrive Wellbeing Logo.png"
+            alt="Thrive Wellbeing Logo"
             className="h-10 w-auto ml-4 object-contain"
           />
         </div>

@@ -76,9 +76,9 @@ export function Header() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-gray-900">
-                BDC Thrive
+                Thrive Wellbeing
               </h1>
-              <p className="text-xs text-gray-600">Wellbeing Monitoring</p>
+              <p className="text-xs text-gray-600">Empowering High Performance Youth Wellness</p>
             </div>
           </div>
           

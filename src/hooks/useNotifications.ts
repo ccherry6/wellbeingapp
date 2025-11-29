@@ -200,10 +200,10 @@ export function useNotifications() {
 
   const sendBrowserNotification = () => {
     if (permission === 'granted' && settings.browser_notifications) {
-      const notification = new Notification('BDC Thrive - Daily Check-in', {
+      const notification = new Notification('Thrive Wellbeing - Daily Check-in', {
         body: 'Good morning! Time for your daily wellbeing questionnaire. Click to open the app.',
-        icon: '/BDC Logo.jpg',
-        badge: '/BDC Logo.jpg',
+        icon: '/Thrive Wellbeing Logo.png',
+        badge: '/Thrive Wellbeing Logo.png',
         tag: 'daily-reminder',
         requireInteraction: true
       })

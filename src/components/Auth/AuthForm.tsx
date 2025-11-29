@@ -113,14 +113,14 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <img
-            src="/BDC Logo.jpg"
-            alt="BDC Logo"
+            src="/Thrive Wellbeing Logo.png"
+            alt="Thrive Wellbeing Logo"
             className="h-20 w-auto mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            <span className="text-blue-900">BDC Thrive</span>
+            <span className="text-blue-900">Thrive Wellbeing</span>
           </h1>
-          <p className="text-gray-600 mb-4">Wellbeing Monitoring Platform</p>
+          <p className="text-gray-600 mb-4">Empowering High Performance Youth Wellness</p>
           <p className="text-gray-600">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>

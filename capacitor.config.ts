@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.bdc.wellbeing',
-  appName: 'BDC Thrive',
+  appId: 'com.thrive.wellbeing',
+  appName: 'Thrive Wellbeing',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

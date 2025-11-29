@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Email content
-    const subject = "BDC Thrive - Daily Wellbeing Check-in Reminder";
+    const subject = "Thrive Wellbeing - Daily Wellbeing Check-in Reminder";
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class=\"container\">
           <div class=\"header\">
-            <h1>🏃‍♂️ BDC Thrive</h1>
+            <h1>🏃‍♂️ Thrive Wellbeing</h1>
             <p>Daily Wellbeing Check-in</p>
           </div>
           <div class=\"content\">
@@ -84,7 +84,7 @@ Deno.serve(async (req: Request) => {
     `;
 
     const textContent = `
-BDC Thrive - Daily Wellbeing Check-in
+Thrive Wellbeing - Daily Wellbeing Check-in
 
 Hi ${studentName || "there"}!
 
@@ -103,7 +103,7 @@ To change your notification settings, log in to the app and visit Settings.
 
     // Send email using Resend
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const FROM_EMAIL = "BDC Wellbeing <ccherry@thrivewellbeing.me>";
+    const FROM_EMAIL = "Thrive Wellbeing <ccherry@thrivewellbeing.me>";
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");

@@ -129,7 +129,7 @@ export default function WeeklySummary() {
     if (!summary) return
 
     const report = `
-BDC Wellbeing - Weekly Summary Report
+Thrive Wellbeing - Weekly Summary Report
 Week of ${summary.weekStart} to ${summary.weekEnd}
 
 PARTICIPATION

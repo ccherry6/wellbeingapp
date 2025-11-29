@@ -151,7 +151,7 @@ export function CoachDashboard() {
 
       // Add title page
       pdf.setFontSize(20)
-      pdf.text('BDC Wellbeing Analytics Report', 20, 30)
+      pdf.text('Thrive Wellbeing Analytics Report', 20, 30)
       pdf.setFontSize(12)
       pdf.text(`Generated on: ${formatDateAEST(new Date())}`, 20, 45)
       pdf.text(`Total Students: ${students.length}`, 20, 55)

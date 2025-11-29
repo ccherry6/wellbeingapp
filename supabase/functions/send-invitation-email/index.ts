@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const roleName = role === 'coach' ? 'Coach' : 'Student-Athlete';
-    const subject = `You're Invited to Join BDC Thrive as a ${roleName}`;
+    const subject = `You're Invited to Join Thrive Wellbeing as a ${roleName}`;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -176,17 +176,17 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="container">
           <div class="header">
-            <img src="https://thrivewellbeing.me/BDC%20Logo.jpg" alt="BDC Logo" class="logo" />
-            <h1>🏃‍♂️ BDC Thrive</h1>
-            <p>Wellbeing & Performance Tracking Platform</p>
+            <img src="https://thrivewellbeing.me/Thrive%20Wellbeing%20Logo.png" alt="Thrive Wellbeing Logo" class="logo" />
+            <h1>🏃‍♂️ Thrive Wellbeing</h1>
+            <p>Empowering High Performance Youth Wellness</p>
           </div>
 
           <div class="content">
             <h2>Hi ${inviteeName}! 👋</h2>
 
-            <p>You've been invited to join <strong>BDC Thrive</strong> as a <span class="highlight">${roleName}</span>.</p>
+            <p>You've been invited to join <strong>Thrive Wellbeing</strong> as a <span class="highlight">${roleName}</span>.</p>
 
-            <p>BDC Thrive is our comprehensive wellbeing and performance tracking platform designed specifically for the BDC High Performance Sport Program. ${role === 'coach' ? 'As a coach, you\'ll have access to student progress tracking, analytics, and wellbeing monitoring tools.' : 'Track your daily wellbeing, monitor your progress, and stay connected with your coaching team.'}</p>
+            <p>Thrive Wellbeing is our comprehensive wellbeing and performance tracking platform designed specifically for the BDC High Performance Sport Program. ${role === 'coach' ? 'As a coach, you\'ll have access to student progress tracking, analytics, and wellbeing monitoring tools.' : 'Track your daily wellbeing, monitor your progress, and stay connected with your coaching team.'}</p>
 
             <center>
               <a href="${inviteUrl}" class="button" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; margin: 25px 0; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -227,13 +227,13 @@ Deno.serve(async (req: Request) => {
     `;
 
     const textContent = `
-BDC Thrive - Invitation to Join as ${roleName}
+Thrive Wellbeing - Invitation to Join as ${roleName}
 
 Hi ${inviteeName}!
 
-You've been invited to join BDC Thrive as a ${roleName}.
+You've been invited to join Thrive Wellbeing as a ${roleName}.
 
-BDC Thrive is our comprehensive wellbeing and performance tracking platform designed specifically for the BDC High Performance Sport Program.
+Thrive Wellbeing is our comprehensive wellbeing and performance tracking platform designed specifically for the BDC High Performance Sport Program.
 
 Getting Started:
 1. Visit the invitation link: ${inviteUrl}
@@ -253,7 +253,7 @@ Need help? Contact ccherry@thrivewellbeing.me
     `;
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const FROM_EMAIL = "BDC Thrive <ccherry@thrivewellbeing.me>";
+    const FROM_EMAIL = "Thrive Wellbeing <ccherry@thrivewellbeing.me>";
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");

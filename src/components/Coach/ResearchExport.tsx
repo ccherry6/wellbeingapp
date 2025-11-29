@@ -353,8 +353,14 @@ export default function ResearchExport() {
                       className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                     />
                     <div className="flex-1">
-                      <div className="font-mono font-medium text-green-700 text-sm">
-                        {participant.research_code}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono font-medium text-green-700 text-sm">
+                          {participant.research_code}
+                        </span>
+                        <span className="text-gray-400">→</span>
+                        <span className="font-medium text-gray-900 text-sm">
+                          {participant.full_name}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-500">
                         {participant.sport} {participant.program_year ? `• Year ${participant.program_year}` : ''}

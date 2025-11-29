@@ -141,7 +141,7 @@ export function CoachDashboard() {
     try {
       const pdf = new jsPDF('p', 'mm', 'a4')
       const chartsContainer = document.getElementById('analytics-charts')
-      
+
       if (!chartsContainer) {
         alert('Please switch to the Analytics tab first to export charts')
         return
@@ -153,7 +153,7 @@ export function CoachDashboard() {
       pdf.setFontSize(12)
       pdf.text(`Generated on: ${formatDateAEST(new Date())}`, 20, 45)
       pdf.text(`Total Students: ${students.length}`, 20, 55)
-      
+
       // Capture charts as images
       const canvas = await html2canvas(chartsContainer, {
         scale: 2,
@@ -161,15 +161,23 @@ export function CoachDashboard() {
         allowTaint: true,
         backgroundColor: '#ffffff'
       })
-      
+
       const imgData = canvas.toDataURL('image/png')
       const imgWidth = 170 // A4 width minus margins
       const imgHeight = (canvas.height * imgWidth) / canvas.width
-      
+
       pdf.addPage()
       pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight)
-      
-      pdf.save(`wellbeing-charts-${new Date().toISOString().split('T')[0]}.pdf`)
+
+      // Use data URI approach for better mobile compatibility
+      const pdfOutput = pdf.output('datauristring')
+      const link = document.createElement('a')
+      link.href = pdfOutput
+      link.download = `wellbeing-charts-${new Date().toISOString().split('T')[0]}.pdf`
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     } catch (error) {
       alert('Error exporting charts. Please try again.')
     }

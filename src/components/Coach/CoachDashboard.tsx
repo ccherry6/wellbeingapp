@@ -161,7 +161,9 @@ export function CoachDashboard() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        foreignObjectRendering: false,
+        removeContainer: true
       })
 
       const imgData = canvas.toDataURL('image/png')
@@ -198,7 +200,9 @@ export function CoachDashboard() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        foreignObjectRendering: false,
+        removeContainer: true
       })
       
       const link = document.createElement('a')

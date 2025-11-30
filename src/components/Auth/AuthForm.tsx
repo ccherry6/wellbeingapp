@@ -115,12 +115,12 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           <img
             src="/Thrive Wellbeing Logo.png"
             alt="Thrive Wellbeing Logo"
-            className="h-32 w-auto mx-auto mb-4 object-contain"
+            className="h-40 w-auto mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             <span className="text-blue-900">Thrive Wellbeing</span>
           </h1>
-          <p className="text-gray-600 mb-4">Empowering High Performance Youth Wellness</p>
+          <p className="text-gray-600 mb-4">Wellbeing Check-in</p>
           <p className="text-gray-600">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>

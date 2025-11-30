@@ -31,10 +31,10 @@ export function ConsentModal({ onParticipate, onSkip, showRememberOption = true 
         <div className="p-6 sm:p-8">
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              <BDCLogo className="h-12 sm:h-16 w-auto" />
+              <BDCLogo className="h-20 sm:h-24 w-auto" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Daily Wellbeing Check-in
+              Wellbeing Check-in
             </h2>
             <p className="text-lg text-gray-600">
               Your participation is completely voluntary

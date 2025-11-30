@@ -115,7 +115,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           <img
             src="/Thrive Wellbeing Logo.png"
             alt="Thrive Wellbeing Logo"
-            className="h-20 w-auto mx-auto mb-4 object-contain"
+            className="h-32 w-auto mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             <span className="text-blue-900">Thrive Wellbeing</span>

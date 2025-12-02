@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { AuthForm } from './components/Auth/AuthForm'
+import { ResetPasswordPage } from './components/Auth/ResetPasswordPage'
 import { Header } from './components/Layout/Header'
 import { StudentDashboard } from './components/Student/StudentDashboard'
 import { CoachDashboard } from './components/Coach/CoachDashboard'
@@ -8,6 +9,13 @@ import { BDCLogo } from './components/BDCLogo'
 
 function App() {
   const { user, userProfile, loading, error } = useAuth()
+
+  // Check if this is a password reset page
+  const isResetPassword = window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery')
+
+  if (isResetPassword) {
+    return <ResetPasswordPage />
+  }
 
 
   // Show error state if there's a connection issue

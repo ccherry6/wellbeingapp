@@ -296,7 +296,11 @@ export function useAuth() {
     try {
       console.log('🔄 Sending password reset email to:', email)
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      const redirectUrl = `${import.meta.env.VITE_APP_URL || window.location.origin}/reset-password`
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl
+      })
 
       if (error) {
         console.error('❌ Password reset error:', error)

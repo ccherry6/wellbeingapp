@@ -296,9 +296,7 @@ export function useAuth() {
     try {
       console.log('🔄 Sending password reset email to:', email)
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#reset-password`
-      })
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
 
       if (error) {
         console.error('❌ Password reset error:', error)

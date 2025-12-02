@@ -8,14 +8,48 @@ export function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
 
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const type = hashParams.get('type')
+    const handleRecovery = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const type = hashParams.get('type')
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
 
-    if (type !== 'recovery') {
-      setError('Invalid password reset link')
+      console.log('🔄 Recovery hash detected:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken })
+
+      if (type !== 'recovery') {
+        setError('Invalid password reset link')
+        return
+      }
+
+      if (!accessToken) {
+        setError('Invalid password reset link - missing tokens')
+        return
+      }
+
+      try {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        })
+
+        if (error) {
+          console.error('❌ Session error:', error)
+          setError('Failed to verify reset link. Please request a new one.')
+          return
+        }
+
+        console.log('✅ Session established:', data.session?.user?.email)
+        setSessionReady(true)
+      } catch (err: any) {
+        console.error('❌ Recovery error:', err)
+        setError('Failed to verify reset link. Please try again.')
+      }
     }
+
+    handleRecovery()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +117,10 @@ export function ResetPasswordPage() {
                 Redirecting you to sign in...
               </p>
             </div>
+          </div>
+        ) : !sessionReady && !error ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -12,24 +12,36 @@ export function ResetPasswordPage() {
 
   useEffect(() => {
     const handleRecovery = async () => {
+      console.log('🔄 Full URL:', window.location.href)
+      console.log('🔄 Hash:', window.location.hash)
+      console.log('🔄 Search:', window.location.search)
+
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const type = hashParams.get('type')
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
 
-      console.log('🔄 Recovery hash detected:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken })
+      console.log('🔄 Parsed params:', {
+        type,
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        accessTokenLength: accessToken?.length || 0
+      })
 
       if (type !== 'recovery') {
-        setError('Invalid password reset link')
+        console.error('❌ Type is not recovery:', type)
+        setError(`Invalid password reset link. Type: ${type || 'missing'}`)
         return
       }
 
       if (!accessToken) {
-        setError('Invalid password reset link - missing tokens')
+        console.error('❌ Access token missing')
+        setError('Invalid password reset link - missing access token. Please request a new reset link.')
         return
       }
 
       try {
+        console.log('🔄 Setting session with tokens...')
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ''
@@ -37,7 +49,7 @@ export function ResetPasswordPage() {
 
         if (error) {
           console.error('❌ Session error:', error)
-          setError('Failed to verify reset link. Please request a new one.')
+          setError(`Failed to verify reset link: ${error.message}`)
           return
         }
 
@@ -45,7 +57,7 @@ export function ResetPasswordPage() {
         setSessionReady(true)
       } catch (err: any) {
         console.error('❌ Recovery error:', err)
-        setError('Failed to verify reset link. Please try again.')
+        setError(`Failed to verify reset link: ${err.message}`)
       }
     }
 

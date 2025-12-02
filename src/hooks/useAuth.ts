@@ -292,6 +292,31 @@ export function useAuth() {
     }
   }
 
+  const resetPassword = async (email: string) => {
+    try {
+      console.log('🔄 Sending password reset email to:', email)
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#reset-password`
+      })
+
+      if (error) {
+        console.error('❌ Password reset error:', error)
+        return { error }
+      }
+
+      console.log('✅ Password reset email sent')
+      return { error: null }
+    } catch (error) {
+      console.error('❌ Password reset exception:', error)
+      return {
+        error: {
+          message: `Password reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }
+      }
+    }
+  }
+
   return {
     user,
     userProfile,
@@ -300,6 +325,7 @@ export function useAuth() {
     signUp,
     signIn,
     switchRole,
-    signOut
+    signOut,
+    resetPassword
   }
 }

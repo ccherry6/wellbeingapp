@@ -1,0 +1,27 @@
+{
+  "name": "Thrive Wellbeing",
+  "short_name": "Thrive",
+  "description": "Empowering High Performance Youth Wellness - Daily wellbeing monitoring for student athletes",
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "prefer_related_applications": false,
+  "categories": ["health", "fitness", "education"],
+  "icons": [
+    {
+      "src": "/Thrive Wellbeing Logo.png",
+      "sizes": "192x192 512x512 180x180 152x152 144x144 120x120 114x114 76x76 72x72 60x60 57x57",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Thrive Wellbeing Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

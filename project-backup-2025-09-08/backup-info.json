@@ -1,0 +1,35 @@
+{
+  "created": "2025-09-08T00:06:45.341Z",
+  "project": "BDC High Performance Sport - Wellbeing Monitor",
+  "description": "Complete backup of the wellbeing monitoring application",
+  "version": "2.0",
+  "files_backed_up": 35,
+  "files_missing": 0,
+  "deployment_url": "https://student-wellbeing-ap-xmok.bolt.host",
+  "supabase_project": "mnmhkmamasbyvcpuoiwa.supabase.co",
+  "features": [
+    "Student wellbeing questionnaire with 10 metrics",
+    "Coach dashboard with comprehensive analytics",
+    "Individual student progress tracking",
+    "QR code login system",
+    "Multiple chart types (line, spider, bar)",
+    "Role switching for testing",
+    "Data export functionality (CSV, PDF, PNG)",
+    "PWA support with notifications",
+    "Supabase integration with RLS",
+    "Responsive design for mobile and desktop"
+  ],
+  "database_tables": [
+    "user_profiles - User information and roles",
+    "wellness_entries - Daily wellbeing responses",
+    "login_sessions - QR code login sessions"
+  ],
+  "restoration_notes": [
+    "1. Set up new Supabase project",
+    "2. Run migration files in supabase/migrations/",
+    "3. Update environment variables in .env",
+    "4. Install dependencies: npm install",
+    "5. Start development: npm run dev",
+    "6. Deploy: npm run build"
+  ]
+}

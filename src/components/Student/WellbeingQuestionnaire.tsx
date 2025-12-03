@@ -432,6 +432,15 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       }
       
       console.log('🎉 SUBMISSION COMPLETED SUCCESSFULLY')
+
+      // Mark as already submitted FIRST to prevent multiple submissions
+      setAlreadySubmitted(true)
+
+      // Mark as completed for today in localStorage for notifications
+      const today = formatDateForInput(new Date())
+      localStorage.setItem(`completed_${user.id}_${today}`, 'true')
+
+      // Clear form fields
       setLastSaved(new Date())
       setNotes('')
       setWantsToSpeak(false)
@@ -442,22 +451,14 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       setHrv('')
       setRestingHeartRate('')
       setShowStaffDropdown(false)
+      setSaving(false)
 
-      // Mark as already submitted to prevent multiple submissions
-      setAlreadySubmitted(true)
-
-      // Mark as completed for today in localStorage for notifications
-      const today = formatDateForInput(new Date())
-      localStorage.setItem(`completed_${user.id}_${today}`, 'true')
-
-      // Navigate to progress view after a brief delay to show success
-      setTimeout(() => {
-        onSuccess?.()
-      }, 1500)
+      // This will show the "Already Checked In Today" screen immediately
+      // User will then click "View Your Progress" to navigate
     } catch (error) {
       console.error('❌ SUBMISSION FAILED:', error)
       console.error('❌ FULL ERROR OBJECT:', JSON.stringify(error, null, 2))
-      
+
       let errorMessage = 'Unknown error'
       if (error instanceof Error) {
         errorMessage = error.message
@@ -470,7 +471,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       } else {
         console.error('❌ NON-ERROR OBJECT THROWN:', typeof error, error)
       }
-      
+
       // Provide more specific error messages based on common issues
       if (errorMessage.includes('JWT')) {
         errorMessage = 'Authentication expired. Please refresh the page and try again.'
@@ -479,11 +480,9 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       } else if (errorMessage.includes('permission') || errorMessage.includes('policy')) {
         errorMessage = 'Permission denied. Please refresh the page and try again.'
       }
-      
+
       console.error('❌ FINAL ERROR MESSAGE:', errorMessage)
       setError(`Failed to save: ${errorMessage}`)
-    } finally {
-      console.log('🏁 SUBMISSION PROCESS COMPLETED (success or failure)')
       setSaving(false)
     }
   }

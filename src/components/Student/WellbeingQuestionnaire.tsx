@@ -443,11 +443,17 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       setRestingHeartRate('')
       setShowStaffDropdown(false)
 
+      // Mark as already submitted to prevent multiple submissions
+      setAlreadySubmitted(true)
+
       // Mark as completed for today in localStorage for notifications
       const today = formatDateForInput(new Date())
       localStorage.setItem(`completed_${user.id}_${today}`, 'true')
 
-      onSuccess?.()
+      // Navigate to progress view after a brief delay to show success
+      setTimeout(() => {
+        onSuccess?.()
+      }, 1500)
     } catch (error) {
       console.error('❌ SUBMISSION FAILED:', error)
       console.error('❌ FULL ERROR OBJECT:', JSON.stringify(error, null, 2))

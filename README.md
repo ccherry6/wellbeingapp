@@ -1,6 +1,22 @@
-# BDC Wellbeing Monitor - Project Backup
+# BDC Wellbeing Monitor - Thrive Wellbeing Platform
 
 Created: 9/23/2025, 10:19:16 AM
+Last Updated: December 3, 2025
+
+## 🚨 IMPORTANT: Configuration Alignment
+
+**Before making any changes or troubleshooting issues, read these guides:**
+
+1. **SERVICE_VERIFICATION_CHECKLIST.md** - Step-by-step checklist to verify all services are aligned
+2. **CONFIGURATION_ALIGNMENT_GUIDE.md** - Master reference for all configuration details
+3. **NETLIFY_DEPLOYMENT_GUIDE.md** - How to deploy and configure Netlify
+
+These guides ensure that Bolt.new, GitHub, Supabase, Resend, and Netlify all use the same project configuration. Mismatched configurations cause features like password reset to fail.
+
+**Your Project ID:** jxprvsxqknkbxthyuudv
+**Your Domain:** https://thrivewellbeing.me
+
+---
 
 ## What's Included
 

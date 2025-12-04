@@ -13,8 +13,15 @@ export function ResetPasswordPage() {
   useEffect(() => {
     const handleRecovery = async () => {
       console.log('🔄 Full URL:', window.location.href)
+      console.log('🔄 Pathname:', window.location.pathname)
       console.log('🔄 Hash:', window.location.hash)
       console.log('🔄 Search:', window.location.search)
+
+      if (!window.location.hash) {
+        console.error('❌ No hash parameters found in URL')
+        setError('Invalid password reset link. The link appears to be incomplete. Please click the link in your email again, or request a new reset link.')
+        return
+      }
 
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const type = hashParams.get('type')
@@ -30,13 +37,13 @@ export function ResetPasswordPage() {
 
       if (type !== 'recovery') {
         console.error('❌ Type is not recovery:', type)
-        setError(`Invalid password reset link. Type: ${type || 'missing'}`)
+        setError(`Invalid password reset link. Link type: ${type || 'missing'}. Please request a new reset link.`)
         return
       }
 
       if (!accessToken) {
         console.error('❌ Access token missing')
-        setError('Invalid password reset link - missing access token. Please request a new reset link.')
+        setError('Invalid password reset link - the security token is missing. This can happen if you clicked a modified link. Please request a new reset link.')
         return
       }
 
@@ -49,7 +56,11 @@ export function ResetPasswordPage() {
 
         if (error) {
           console.error('❌ Session error:', error)
-          setError(`Failed to verify reset link: ${error.message}`)
+          if (error.message.includes('expired') || error.message.includes('invalid')) {
+            setError(`This password reset link has expired or is invalid. Please request a new reset link. (Error: ${error.message})`)
+          } else {
+            setError(`Failed to verify reset link: ${error.message}`)
+          }
           return
         }
 
@@ -133,6 +144,19 @@ export function ResetPasswordPage() {
         ) : !sessionReady && !error ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+          </div>
+        ) : error ? (
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm font-medium mb-2">Reset Link Error</p>
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="w-full bg-blue-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-800 focus:ring-2 focus:ring-blue-900 focus:ring-offset-2 transition-all"
+            >
+              Return to Login
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

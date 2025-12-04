@@ -94,7 +94,7 @@ export function ResetPasswordPage() {
 
       setTimeout(() => {
         window.location.href = '/'
-      }, 3000)
+      }, 2000)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -123,10 +123,10 @@ export function ResetPasswordPage() {
           <div className="space-y-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-green-800 text-sm font-medium mb-2">
-                Your password has been updated!
+                Password Updated Successfully!
               </p>
               <p className="text-green-700 text-sm">
-                Redirecting you to sign in...
+                Taking you to your dashboard...
               </p>
             </div>
           </div>
@@ -156,8 +156,12 @@ export function ResetPasswordPage() {
                   placeholder="••••••••"
                   required
                   minLength={6}
+                  autoFocus
                 />
               </div>
+              <p className="text-xs text-gray-600 mt-1">
+                Must be at least 6 characters
+              </p>
             </div>
 
             <div>

@@ -119,8 +119,9 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setSuccess('')
 
     try {
+      const redirectUrl = import.meta.env.VITE_APP_URL || window.location.origin
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: redirectUrl,
       })
 
       if (error) {
@@ -137,7 +138,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <img
@@ -181,10 +182,11 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="your.email@school.edu"
                   required
+                  autoFocus
                 />
               </div>
               <p className="text-xs text-gray-600 mt-2">
-                Enter your email address and we'll send you a link to reset your password.
+                We'll send you a secure link to reset your password. Check your spam folder if you don't see it.
               </p>
             </div>
 

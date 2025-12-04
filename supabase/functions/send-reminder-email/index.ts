@@ -13,7 +13,12 @@ interface ReminderEmailRequest {
 }
 
 Deno.serve(async (req: Request) => {
+  console.log("=== Reminder Email Function Called ===");
+  console.log("Method:", req.method);
+  console.log("Headers:", Object.fromEntries(req.headers.entries()));
+
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request");
     return new Response(null, {
       status: 200,
       headers: corsHeaders,
@@ -21,9 +26,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { studentEmail, studentName, reminderTime }: ReminderEmailRequest = await req.json();
+    const rawBody = await req.text();
+    console.log("Raw request body:", rawBody);
+    
+    const body = JSON.parse(rawBody) as ReminderEmailRequest;
+    const { studentEmail, studentName, reminderTime } = body;
+    
+    console.log("Parsed request:", { studentEmail, studentName, reminderTime });
 
     if (!studentEmail) {
+      console.error("Missing studentEmail");
       return new Response(
         JSON.stringify({ error: "Student email is required" }),
         {
@@ -49,12 +61,12 @@ Deno.serve(async (req: Request) => {
         </style>
       </head>
       <body>
-        <div class=\"container\">
-          <div class=\"header\">
+        <div class="container">
+          <div class="header">
             <h1>🏃‍♂️ Thrive Wellbeing</h1>
             <p>Daily Wellbeing Check-in</p>
           </div>
-          <div class=\"content\">
+          <div class="content">
             <h2>Hi ${studentName || "there"}! 👋</h2>
             <p>This is your daily reminder to complete your wellbeing questionnaire.</p>
             <p>Taking a few minutes each day to check in with yourself helps:</p>
@@ -66,15 +78,15 @@ Deno.serve(async (req: Request) => {
             </ul>
             <p>Your scheduled reminder time: <strong>${reminderTime}</strong></p>
             <center>
-              <a href=\"${Deno.env.get("SUPABASE_URL") || "#"}\" class=\"button\">
+              <a href="${Deno.env.get("SUPABASE_URL") || "#"}" class="button">
                 Complete Check-in Now
               </a>
             </center>
-            <p style=\"margin-top: 30px; font-size: 14px; color: #6b7280;\">
+            <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
               This reminder will only be sent if you haven't completed your daily check-in yet.
             </p>
           </div>
-          <div class=\"footer\">
+          <div class="footer">
             <p>BDC High Performance Sport Program</p>
             <p>To change your notification settings, log in to the app and visit Settings.</p>
           </div>
@@ -105,6 +117,10 @@ To change your notification settings, log in to the app and visit Settings.
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const FROM_EMAIL = "Thrive Wellbeing <ccherry@thrivewellbeing.me>";
 
+    console.log("Checking RESEND_API_KEY...");
+    console.log("API Key exists:", !!RESEND_API_KEY);
+    console.log("API Key length:", RESEND_API_KEY?.length || 0);
+
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY environment variable is not set");
       return new Response(
@@ -120,10 +136,12 @@ To change your notification settings, log in to the app and visit Settings.
     }
 
     console.log("Sending reminder email to:", studentEmail);
+    console.log("From:", FROM_EMAIL);
     console.log("Subject:", subject);
     console.log("Reminder time:", reminderTime);
 
     try {
+      console.log("Calling Resend API...");
       const emailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -139,7 +157,9 @@ To change your notification settings, log in to the app and visit Settings.
         }),
       });
 
+      console.log("Resend API response status:", emailResponse.status);
       const emailData = await emailResponse.json();
+      console.log("Resend API response data:", emailData);
 
       if (!emailResponse.ok) {
         console.error("Resend API error:", emailData);
@@ -148,6 +168,8 @@ To change your notification settings, log in to the app and visit Settings.
         let errorMessage = "Failed to send email via Resend";
         if (emailResponse.status === 403) {
           errorMessage = "Email domain not verified in Resend. Please verify your domain in your Resend account.";
+        } else if (emailResponse.status === 422) {
+          errorMessage = "Invalid email request. Check email addresses and content.";
         }
 
         return new Response(
@@ -163,7 +185,7 @@ To change your notification settings, log in to the app and visit Settings.
         );
       }
 
-      console.log("Email sent successfully:", emailData);
+      console.log("✅ Email sent successfully:", emailData);
 
       return new Response(
         JSON.stringify({
@@ -178,7 +200,7 @@ To change your notification settings, log in to the app and visit Settings.
         }
       );
     } catch (fetchError) {
-      console.error("Error calling Resend API:", fetchError);
+      console.error("❌ Error calling Resend API:", fetchError);
       return new Response(
         JSON.stringify({
           error: "Failed to call Resend API",
@@ -191,7 +213,7 @@ To change your notification settings, log in to the app and visit Settings.
       );
     }
   } catch (error) {
-    console.error("Error sending reminder email:", error);
+    console.error("❌ Error in reminder email function:", error);
     return new Response(
       JSON.stringify({ 
         error: "Failed to send reminder email",

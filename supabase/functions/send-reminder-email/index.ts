@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
             </ul>
             <p>Your scheduled reminder time: <strong>${reminderTime}</strong></p>
             <center>
-              <a href="${Deno.env.get("SUPABASE_URL") || "#"}" class="button">
+              <a href="https://thrivewellbeing.me" class="button">
                 Complete Check-in Now
               </a>
             </center>
@@ -104,7 +104,7 @@ This is your daily reminder to complete your wellbeing questionnaire.
 
 Your scheduled reminder time: ${reminderTime}
 
-Complete your check-in by visiting: ${Deno.env.get("SUPABASE_URL") || "#"}
+Complete your check-in by visiting: https://thrivewellbeing.me
 
 This reminder will only be sent if you haven't completed your daily check-in yet.
 

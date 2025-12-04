@@ -12,9 +12,19 @@ function App() {
   const [isPasswordReset, setIsPasswordReset] = useState(false)
 
   useEffect(() => {
+    console.log('🔍 Checking for password reset...')
+    console.log('🔍 Full URL:', window.location.href)
+    console.log('🔍 Hash:', window.location.hash)
+
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const type = hashParams.get('type')
+    const accessToken = hashParams.get('access_token')
+
+    console.log('🔍 Type:', type)
+    console.log('🔍 Has Access Token:', !!accessToken)
+
     if (type === 'recovery') {
+      console.log('✅ Password reset detected')
       setIsPasswordReset(true)
     }
   }, [])

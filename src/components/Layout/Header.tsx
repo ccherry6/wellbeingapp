@@ -47,6 +47,7 @@ function PWAInstallPrompt() {
 
 export function Header() {
   const { user, userProfile, signOut, switchRole } = useAuth()
+  const [isSigningOut, setIsSigningOut] = React.useState(false)
 
   // Check if user can switch roles (coaches and admins based on actual_role)
   const canSwitchRoles = () => {
@@ -55,7 +56,15 @@ export function Header() {
   }
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      console.log('Header: Sign out button clicked')
+      setIsSigningOut(true)
+      await signOut()
+    } catch (error) {
+      console.error('Header: Sign out failed:', error)
+      // Force reload even if sign out fails
+      window.location.href = '/'
+    }
   }
 
   const handleRoleSwitch = async () => {
@@ -107,10 +116,20 @@ export function Header() {
             )}
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100"
+              disabled={isSigningOut}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm">Sign Out</span>
+              {isSigningOut ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                  <span className="text-sm">Signing Out...</span>
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Sign Out</span>
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -263,30 +263,36 @@ export function useAuth() {
     try {
       console.log('🔄 Signing out...')
 
-      // Clear shared state immediately
-      setSharedState(null, null, false, null)
-
-      // Sign out from Supabase
+      // Sign out from Supabase first (this clears all storage automatically)
       const { error } = await supabase.auth.signOut()
 
       if (error) {
         console.error('❌ Sign out error:', error)
-      } else {
-        console.log('✅ Sign out successful')
+        throw error
       }
 
-      // Clear any stored session data
-      localStorage.removeItem('supabase.auth.token')
-      sessionStorage.clear()
+      console.log('✅ Sign out successful')
 
-      // Force reload to clear all state
+      // Clear shared state
+      setSharedState(null, null, false, null)
+
+      // Force a clean reload to login page
       window.location.href = '/'
 
-      return { error }
+      return { error: null }
     } catch (error) {
       console.error('❌ Sign out exception:', error)
-      // Even if there's an error, clear state and reload
+      // Even if there's an error, try to clear state and reload
       setSharedState(null, null, false, null)
+
+      // Try to clear any lingering session data manually as fallback
+      try {
+        localStorage.clear()
+        sessionStorage.clear()
+      } catch (e) {
+        console.error('Failed to clear storage:', e)
+      }
+
       window.location.href = '/'
       return { error }
     }

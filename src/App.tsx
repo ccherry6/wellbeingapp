@@ -9,32 +9,33 @@ import { BDCLogo } from './components/BDCLogo'
 import { supabase } from './lib/supabase'
 
 function AuthListener() {
-  const [isPasswordReset, setIsPasswordReset] = useState(false)
+  // Check IMMEDIATELY if this is a password reset (before any state changes)
+  const checkIfPasswordReset = () => {
+    const hash = window.location.hash
+    if (!hash) return false
+
+    const hashParams = new URLSearchParams(hash.substring(1))
+    const type = hashParams.get('type')
+    const accessToken = hashParams.get('access_token')
+
+    return type === 'recovery' && !!accessToken
+  }
+
+  const [isPasswordReset, setIsPasswordReset] = useState(checkIfPasswordReset())
 
   useEffect(() => {
-    console.log('🔍 AuthListener: Initializing password reset detection')
+    console.log('🔍 AuthListener: Initializing')
     console.log('🔍 Full URL:', window.location.href)
     console.log('🔍 Hash:', window.location.hash)
+    console.log('🔍 isPasswordReset state:', isPasswordReset)
 
-    const checkPasswordRecovery = () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const type = hashParams.get('type')
-      const accessToken = hashParams.get('access_token')
-
-      console.log('🔍 Manual check - Type:', type, '| Has Token:', !!accessToken)
-
-      if (type === 'recovery' && accessToken) {
-        console.log('✅ PASSWORD RECOVERY DETECTED via manual hash check')
-        setIsPasswordReset(true)
-        return true
-      }
-      return false
-    }
-
-    if (checkPasswordRecovery()) {
+    // If we already detected it, don't set up listeners
+    if (isPasswordReset) {
+      console.log('✅ PASSWORD RECOVERY ALREADY DETECTED - Showing UpdatePassword')
       return
     }
 
+    // Otherwise set up auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔐 Auth event:', event)
 
@@ -47,12 +48,14 @@ function AuthListener() {
     return () => {
       authListener?.subscription.unsubscribe()
     }
-  }, [])
+  }, [isPasswordReset])
 
   if (isPasswordReset) {
+    console.log('🎯 Rendering UpdatePassword component')
     return <UpdatePassword />
   }
 
+  console.log('🎯 Rendering normal App component')
   return <App />
 }
 

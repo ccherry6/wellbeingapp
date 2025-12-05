@@ -1,44 +1,45 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { AuthForm } from './components/Auth/AuthForm'
-import { ResetPasswordPage } from './components/Auth/ResetPasswordPage'
+import { UpdatePassword } from './pages/UpdatePassword'
 import { Header } from './components/Layout/Header'
 import { StudentDashboard } from './components/Student/StudentDashboard'
 import { CoachDashboard } from './components/Coach/CoachDashboard'
 import { BDCLogo } from './components/BDCLogo'
 import { supabase } from './lib/supabase'
 
-function App() {
-  const { user, userProfile, loading, error } = useAuth()
+function AuthListener() {
   const [isPasswordReset, setIsPasswordReset] = useState(false)
 
   useEffect(() => {
-    console.log('🔍 Checking for password reset...')
+    console.log('🔍 AuthListener: Initializing password reset detection')
     console.log('🔍 Full URL:', window.location.href)
-    console.log('🔍 Pathname:', window.location.pathname)
     console.log('🔍 Hash:', window.location.hash)
 
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const type = hashParams.get('type')
-    const accessToken = hashParams.get('access_token')
-    const hasResetPasswordInHash = window.location.hash.includes('reset-password')
+    const checkPasswordRecovery = () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const type = hashParams.get('type')
+      const accessToken = hashParams.get('access_token')
 
-    console.log('🔍 Type:', type)
-    console.log('🔍 Has Access Token:', !!accessToken)
-    console.log('🔍 Has reset-password in hash:', hasResetPasswordInHash)
+      console.log('🔍 Manual check - Type:', type, '| Has Token:', !!accessToken)
 
-    if (type === 'recovery' || window.location.pathname === '/reset-password' || hasResetPasswordInHash) {
-      console.log('✅ Password reset detected')
-      setIsPasswordReset(true)
+      if (type === 'recovery' && accessToken) {
+        console.log('✅ PASSWORD RECOVERY DETECTED via manual hash check')
+        setIsPasswordReset(true)
+        return true
+      }
+      return false
     }
 
-    // Set up Supabase auth state change listener for PASSWORD_RECOVERY event
+    if (checkPasswordRecovery()) {
+      return
+    }
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔐 Auth event:', event)
-      console.log('🔐 Session:', session ? 'exists' : 'none')
 
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('✅ PASSWORD_RECOVERY event detected')
+        console.log('✅ PASSWORD RECOVERY DETECTED via onAuthStateChange event')
         setIsPasswordReset(true)
       }
     })
@@ -49,8 +50,14 @@ function App() {
   }, [])
 
   if (isPasswordReset) {
-    return <ResetPasswordPage />
+    return <UpdatePassword />
   }
+
+  return <App />
+}
+
+function App() {
+  const { user, userProfile, loading, error } = useAuth()
 
   // Show error state if there's a connection issue
   if (error) {
@@ -125,4 +132,4 @@ function App() {
   )
 }
 
-export default App
+export default AuthListener

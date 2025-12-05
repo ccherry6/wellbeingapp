@@ -120,7 +120,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
 
     try {
       const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
-      const redirectUrl = `${baseUrl}/reset-password`
+      const redirectUrl = `${baseUrl}/#reset-password`
 
       console.log('🔄 Sending password reset to:', email)
       console.log('🔄 Redirect URL:', redirectUrl)

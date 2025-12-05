@@ -20,11 +20,13 @@ function App() {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const type = hashParams.get('type')
     const accessToken = hashParams.get('access_token')
+    const hasResetPasswordInHash = window.location.hash.includes('reset-password')
 
     console.log('🔍 Type:', type)
     console.log('🔍 Has Access Token:', !!accessToken)
+    console.log('🔍 Has reset-password in hash:', hasResetPasswordInHash)
 
-    if (type === 'recovery' || window.location.pathname === '/reset-password') {
+    if (type === 'recovery' || window.location.pathname === '/reset-password' || hasResetPasswordInHash) {
       console.log('✅ Password reset detected')
       setIsPasswordReset(true)
     }

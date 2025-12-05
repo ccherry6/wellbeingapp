@@ -6,6 +6,7 @@ import { Header } from './components/Layout/Header'
 import { StudentDashboard } from './components/Student/StudentDashboard'
 import { CoachDashboard } from './components/Coach/CoachDashboard'
 import { BDCLogo } from './components/BDCLogo'
+import { supabase } from './lib/supabase'
 
 function App() {
   const { user, userProfile, loading, error } = useAuth()
@@ -29,6 +30,21 @@ function App() {
     if (type === 'recovery' || window.location.pathname === '/reset-password' || hasResetPasswordInHash) {
       console.log('✅ Password reset detected')
       setIsPasswordReset(true)
+    }
+
+    // Set up Supabase auth state change listener for PASSWORD_RECOVERY event
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth event:', event)
+      console.log('🔐 Session:', session ? 'exists' : 'none')
+
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('✅ PASSWORD_RECOVERY event detected')
+        setIsPasswordReset(true)
+      }
+    })
+
+    return () => {
+      authListener?.subscription.unsubscribe()
     }
   }, [])
 

@@ -78,9 +78,8 @@ Deno.serve(async (req: Request) => {
 
     console.log("💾 Token stored in database");
 
-    // Get the origin from request or use production URL
-    const origin = req.headers.get("origin") || "https://thrivewellbeing.me";
-    const resetUrl = `${origin}/#reset=${token}`;
+    // Always use production URL for reset links
+    const resetUrl = `https://thrivewellbeing.me/#reset=${token}`;
 
     console.log("🔗 Reset URL:", resetUrl);
 

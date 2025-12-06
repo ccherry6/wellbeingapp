@@ -120,6 +120,11 @@ Deno.serve(async (req: Request) => {
               padding: 30px 20px;
               text-align: center;
             }
+            .header img {
+              max-width: 120px;
+              height: auto;
+              margin-bottom: 15px;
+            }
             .header h1 {
               margin: 0;
               font-size: 24px;
@@ -168,11 +173,12 @@ Deno.serve(async (req: Request) => {
         <body>
           <div class="container">
             <div class="header">
+              <img src="https://thrivewellbeing.me/Thrive%20Wellbeing%20Logo.png" alt="Thrive Wellbeing" />
               <h1>🔐 Reset Your Password</h1>
             </div>
             <div class="content">
               <p>Hi there,</p>
-              <p>You requested to reset your password for <strong>BDC Thrive Wellbeing</strong>.</p>
+              <p>You requested to reset your password for <strong>Thrive Wellbeing</strong>.</p>
               <p>Click the button below to create a new password:</p>
 
               <div style="text-align: center;">
@@ -197,7 +203,7 @@ Deno.serve(async (req: Request) => {
               </p>
 
               <div class="footer">
-                <p><strong>BDC Thrive Wellbeing</strong></p>
+                <p><strong>Thrive Wellbeing</strong></p>
                 <p>This is an automated email, please do not reply.</p>
               </div>
             </div>
@@ -215,9 +221,9 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "BDC Thrive <noreply@thrivewellbeing.me>",
+        from: "Thrive Wellbeing <noreply@thrivewellbeing.me>",
         to: [email],
-        subject: "Reset Your Password - BDC Thrive",
+        subject: "Reset Your Password - Thrive Wellbeing",
         html: emailHtml,
       }),
     });

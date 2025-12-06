@@ -13,83 +13,33 @@ export function UpdatePassword() {
 
   useEffect(() => {
     const handleRecovery = async () => {
-      console.log('🔄 UpdatePassword: Handling recovery')
+      console.log('🔄 UpdatePassword: Starting password reset flow')
       console.log('🔄 Full URL:', window.location.href)
-      console.log('🔄 Hash:', window.location.hash)
 
       if (!window.location.hash) {
         console.error('❌ No hash parameters found')
-        setError('Invalid password reset link. Please request a new one.')
+        setError('Invalid password reset link. The link may be incomplete or corrupted.')
         setVerifying(false)
         return
       }
 
       const hash = window.location.hash.substring(1)
-      const hashParams = new URLSearchParams(hash)
+      console.log('🔄 Hash content:', hash)
 
-      // Check for custom reset token format: #reset=TOKEN
+      const hashParams = new URLSearchParams(hash)
       const resetToken = hashParams.get('reset')
 
       if (resetToken) {
-        console.log('✅ Custom reset token detected')
-        // Store token for later use
-        window.resetToken = resetToken
+        console.log('✅ Password reset token detected:', resetToken.substring(0, 10) + '...')
+        ;(window as any).resetToken = resetToken
         setSessionReady(true)
         setVerifying(false)
         return
       }
 
-      // Fallback: Handle Supabase native recovery format
-      const type = hashParams.get('type')
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
-
-      console.log('🔄 Parsed params:', {
-        type,
-        hasAccessToken: !!accessToken,
-        hasRefreshToken: !!refreshToken,
-      })
-
-      if (type !== 'recovery') {
-        console.error('❌ Invalid reset link format')
-        setError('Invalid password reset link. Please request a new one.')
-        setVerifying(false)
-        return
-      }
-
-      if (!accessToken) {
-        console.error('❌ Access token missing')
-        setError('Invalid password reset link - security token is missing.')
-        setVerifying(false)
-        return
-      }
-
-      try {
-        console.log('🔄 Setting session with tokens...')
-        const { data, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || '',
-        })
-
-        if (sessionError) {
-          console.error('❌ Session error:', sessionError)
-          if (sessionError.message.includes('expired') || sessionError.message.includes('invalid')) {
-            setError('This password reset link has expired. Please request a new one.')
-          } else {
-            setError(`Failed to verify reset link: ${sessionError.message}`)
-          }
-          setVerifying(false)
-          return
-        }
-
-        console.log('✅ Session established for:', data.session?.user?.email)
-        setSessionReady(true)
-        setVerifying(false)
-      } catch (err: any) {
-        console.error('❌ Recovery error:', err)
-        setError(`Failed to verify reset link: ${err.message}`)
-        setVerifying(false)
-      }
+      console.error('❌ No valid reset token found in URL')
+      setError('Invalid password reset link. Please request a new password reset email.')
+      setVerifying(false)
     }
 
     handleRecovery()
@@ -113,52 +63,45 @@ export function UpdatePassword() {
     }
 
     try {
-      console.log('🔄 Updating password...')
-
-      // Check if using custom token system
       const resetToken = (window as any).resetToken
 
-      if (resetToken) {
-        console.log('🔄 Using custom reset token')
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-reset-token`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              token: resetToken,
-              newPassword: password
-            }),
-          }
-        )
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to update password')
-        }
-      } else {
-        // Fallback to Supabase native method
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password,
-        })
-
-        if (updateError) {
-          throw updateError
-        }
+      if (!resetToken) {
+        throw new Error('Reset token is missing. Please use the link from your email.')
       }
 
-      console.log('✅ Password updated successfully')
+      console.log('🔄 Calling password reset API...')
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-reset-token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: resetToken,
+            newPassword: password
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error('❌ API error:', data)
+        throw new Error(data.error || data.details || 'Failed to update password')
+      }
+
+      console.log('✅ Password updated successfully:', data.message)
       setSuccess(true)
 
       setTimeout(() => {
+        console.log('🔄 Redirecting to login...')
         window.location.href = '/'
-      }, 2000)
+      }, 2500)
     } catch (err: any) {
       console.error('❌ Password update error:', err)
-      setError(err.message)
+      setError(err.message || 'An error occurred while updating your password')
     } finally {
       setLoading(false)
     }
@@ -200,13 +143,16 @@ export function UpdatePassword() {
               </div>
             </div>
           </div>
-        ) : error ? (
+        ) : error && !sessionReady ? (
           <div className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-red-600 text-sm font-medium mb-1">Reset Link Error</p>
-                <p className="text-red-600 text-sm">{error}</p>
+                <p className="text-red-600 text-sm mb-2">{error}</p>
+                <p className="text-xs text-red-500">
+                  Please click "Forgot Password" on the login page to request a new reset link.
+                </p>
               </div>
             </div>
             <button
@@ -218,6 +164,12 @@ export function UpdatePassword() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 New Password
@@ -259,9 +211,17 @@ export function UpdatePassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-800 focus:ring-2 focus:ring-blue-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full bg-gradient-to-r from-blue-900 to-red-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-800 hover:to-red-700 focus:ring-2 focus:ring-blue-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? 'Updating Password...' : 'Update Password'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => (window.location.href = '/')}
+              className="w-full text-blue-900 hover:text-blue-800 font-medium py-2"
+            >
+              Cancel
             </button>
           </form>
         )}

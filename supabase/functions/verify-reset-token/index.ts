@@ -13,9 +13,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log("🔄 Password reset verification request received");
+
     const { token, newPassword } = await req.json();
 
     if (!token || !newPassword) {
+      console.error("❌ Missing token or password");
       return new Response(
         JSON.stringify({ error: "Token and new password are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -23,13 +26,15 @@ Deno.serve(async (req: Request) => {
     }
 
     if (newPassword.length < 6) {
+      console.error("❌ Password too short");
       return new Response(
         JSON.stringify({ error: "Password must be at least 6 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create Supabase client with service role
+    console.log("🔑 Verifying token...");
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -41,49 +46,86 @@ Deno.serve(async (req: Request) => {
       .select("*")
       .eq("token", token)
       .eq("used", false)
-      .single();
+      .maybeSingle();
 
-    if (tokenError || !tokenData) {
+    if (tokenError) {
+      console.error("❌ Database error:", tokenError);
+      throw new Error("Database error");
+    }
+
+    if (!tokenData) {
+      console.error("❌ Token not found or already used");
       return new Response(
-        JSON.stringify({ error: "Invalid or expired reset token" }),
+        JSON.stringify({
+          error: "Invalid or expired reset token",
+          details: "This reset link may have already been used or has expired. Please request a new one."
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("✅ Token found for user:", tokenData.user_id);
 
     // Check if expired
-    if (new Date(tokenData.expires_at) < new Date()) {
+    const expiresAt = new Date(tokenData.expires_at);
+    const now = new Date();
+
+    if (expiresAt < now) {
+      console.error("❌ Token expired at:", expiresAt.toISOString());
       return new Response(
-        JSON.stringify({ error: "This reset link has expired. Please request a new one." }),
+        JSON.stringify({
+          error: "This reset link has expired",
+          details: "Please request a new password reset link. Reset links expire after 1 hour."
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("⏰ Token valid, expires:", expiresAt.toISOString());
+
     // Update user password
+    console.log("🔄 Updating password...");
+
     const { error: updateError } = await supabase.auth.admin.updateUserById(
       tokenData.user_id,
       { password: newPassword }
     );
 
     if (updateError) {
-      console.error("Password update error:", updateError);
-      throw new Error("Failed to update password");
+      console.error("❌ Password update error:", updateError);
+      throw new Error("Failed to update password: " + updateError.message);
     }
 
+    console.log("✅ Password updated successfully");
+
     // Mark token as used
-    await supabase
+    const { error: markError } = await supabase
       .from("password_reset_tokens")
       .update({ used: true })
       .eq("id", tokenData.id);
 
+    if (markError) {
+      console.error("⚠️ Warning: Could not mark token as used:", markError);
+      // Don't fail the request, password was already updated
+    } else {
+      console.log("✅ Token marked as used");
+    }
+
     return new Response(
-      JSON.stringify({ success: true, message: "Password updated successfully" }),
+      JSON.stringify({
+        success: true,
+        message: "Password updated successfully. You can now sign in with your new password."
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error("❌ Fatal error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({
+        error: error.message || "Internal server error",
+        details: "Please try again or contact support if the problem persists"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

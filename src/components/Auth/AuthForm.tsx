@@ -176,8 +176,11 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-green-600 text-sm">{success}</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-green-800 text-sm font-medium mb-2">{success}</p>
+                <p className="text-green-700 text-xs">
+                  If you don't see the email, check your spam folder. The link will expire in 1 hour.
+                </p>
               </div>
             )}
 

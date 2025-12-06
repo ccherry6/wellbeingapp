@@ -15,6 +15,12 @@ function AuthListener() {
     if (!hash) return false
 
     const hashParams = new URLSearchParams(hash.substring(1))
+
+    // Check for custom reset token format: #reset=TOKEN
+    const resetToken = hashParams.get('reset')
+    if (resetToken) return true
+
+    // Check for Supabase native recovery format
     const type = hashParams.get('type')
     const accessToken = hashParams.get('access_token')
 

@@ -24,7 +24,22 @@ export function UpdatePassword() {
         return
       }
 
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const hash = window.location.hash.substring(1)
+      const hashParams = new URLSearchParams(hash)
+
+      // Check for custom reset token format: #reset=TOKEN
+      const resetToken = hashParams.get('reset')
+
+      if (resetToken) {
+        console.log('✅ Custom reset token detected')
+        // Store token for later use
+        window.resetToken = resetToken
+        setSessionReady(true)
+        setVerifying(false)
+        return
+      }
+
+      // Fallback: Handle Supabase native recovery format
       const type = hashParams.get('type')
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
@@ -36,7 +51,7 @@ export function UpdatePassword() {
       })
 
       if (type !== 'recovery') {
-        console.error('❌ Type is not recovery:', type)
+        console.error('❌ Invalid reset link format')
         setError('Invalid password reset link. Please request a new one.')
         setVerifying(false)
         return
@@ -99,12 +114,40 @@ export function UpdatePassword() {
 
     try {
       console.log('🔄 Updating password...')
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password,
-      })
 
-      if (updateError) {
-        throw updateError
+      // Check if using custom token system
+      const resetToken = (window as any).resetToken
+
+      if (resetToken) {
+        console.log('🔄 Using custom reset token')
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-reset-token`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token: resetToken,
+              newPassword: password
+            }),
+          }
+        )
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to update password')
+        }
+      } else {
+        // Fallback to Supabase native method
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password,
+        })
+
+        if (updateError) {
+          throw updateError
+        }
       }
 
       console.log('✅ Password updated successfully')

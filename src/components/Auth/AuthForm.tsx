@@ -119,25 +119,27 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setSuccess('')
 
     try {
-      const currentOrigin = window.location.origin
-      const redirectUrl = `${currentOrigin}/`
-
       console.log('🔄 Sending password reset to:', email)
-      console.log('🔄 Current origin:', currentOrigin)
-      console.log('🔄 Redirect URL:', redirectUrl)
-      console.log('🔄 VITE_APP_URL:', import.meta.env.VITE_APP_URL)
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
-      })
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/request-password-reset`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        }
+      )
 
-      if (error) {
-        console.error('❌ Reset email error:', error)
-        throw error
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send reset email')
       }
 
       console.log('✅ Reset email sent successfully')
-      setSuccess('Password reset email sent! Check your inbox and spam folder. The reset link will redirect you back here.')
+      setSuccess('Password reset email sent! Check your inbox and spam folder.')
       setEmail('')
     } catch (err: any) {
       console.error('❌ Reset email exception:', err)

@@ -97,14 +97,6 @@ const fetchUserProfile = async (userId: string) => {
   try {
     console.log('🔄 Fetching profile for user:', userId)
 
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      throw new Error('Supabase environment variables not configured.')
-    }
-
-    if (import.meta.env.VITE_SUPABASE_URL.includes('placeholder') || import.meta.env.VITE_SUPABASE_ANON_KEY.includes('placeholder')) {
-      throw new Error('Supabase environment variables contain placeholder values.')
-    }
-
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')

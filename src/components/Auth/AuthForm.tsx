@@ -119,11 +119,13 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setSuccess('')
 
     try {
-      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
-      const redirectUrl = `${baseUrl}/#reset-password`
+      const currentOrigin = window.location.origin
+      const redirectUrl = `${currentOrigin}/`
 
       console.log('🔄 Sending password reset to:', email)
+      console.log('🔄 Current origin:', currentOrigin)
       console.log('🔄 Redirect URL:', redirectUrl)
+      console.log('🔄 VITE_APP_URL:', import.meta.env.VITE_APP_URL)
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
@@ -135,7 +137,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
       }
 
       console.log('✅ Reset email sent successfully')
-      setSuccess('Password reset email sent! Please check your inbox and spam folder.')
+      setSuccess('Password reset email sent! Check your inbox and spam folder. The reset link will redirect you back here.')
       setEmail('')
     } catch (err: any) {
       console.error('❌ Reset email exception:', err)

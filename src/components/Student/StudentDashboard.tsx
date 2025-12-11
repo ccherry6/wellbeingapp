@@ -4,6 +4,7 @@ import { WellbeingQuestionnaire } from './WellbeingQuestionnaire'
 import { StudentProgress } from './StudentProgress'
 import { ProgressTracker } from './ProgressTracker'
 import { NotificationSettings } from '../Settings/NotificationSettings'
+import { AccountDeletion } from '../Settings/AccountDeletion'
 import { ConsentModal } from './ConsentModal'
 import { SkipConfirmation } from './SkipConfirmation'
 import { useAuth } from '../../hooks/useAuth'
@@ -186,7 +187,12 @@ export function StudentDashboard() {
         )}
         {selectedView === 'tracker' && user && <ProgressTracker userId={user.id} />}
         {selectedView === 'progress' && <StudentProgress />}
-        {selectedView === 'settings' && <NotificationSettings />}
+        {selectedView === 'settings' && (
+          <div className="space-y-6">
+            <NotificationSettings />
+            <AccountDeletion />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle, Book, Target, Activity, BarChart2, UserPlus, Microscope } from 'lucide-react'
+import { Users, TrendingUp, Calendar, Download, FileImage, FileText, AlertCircle, UserSearch, MessageCircle, Book, Target, Activity, BarChart2, UserPlus, Microscope, Settings } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { StudentOverview } from './StudentOverview'
 import { AnalyticsCharts } from './AnalyticsCharts'
@@ -12,6 +12,8 @@ import CorrelationAnalysis from './CorrelationAnalysis'
 import WeeklySummary from './WeeklySummary'
 import UserManagement from './UserManagement'
 import ResearchExport from './ResearchExport'
+import { NotificationSettings } from '../Settings/NotificationSettings'
+import { AccountDeletion } from '../Settings/AccountDeletion'
 import { BDCLogo } from '../BDCLogo'
 import { formatDateAEST } from '../../lib/dateUtils'
 import html2canvas from 'html2canvas'
@@ -28,7 +30,7 @@ interface Student {
 
 export function CoachDashboard() {
   const [students, setStudents] = useState<Student[]>([])
-  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users' | 'research'>('overview')
+  const [selectedView, setSelectedView] = useState<'overview' | 'analytics' | 'alerts' | 'deepdive' | 'contacts' | 'resources' | 'risk' | 'correlations' | 'weekly' | 'users' | 'research' | 'settings'>('overview')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -406,6 +408,20 @@ export function CoachDashboard() {
             <Microscope className="w-4 h-4 inline mr-2" />
             Research Export
           </button>
+          <button
+            onClick={() => {
+              setSelectedView('settings')
+              setSelectedStudentId(null)
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedView === 'settings'
+                ? 'bg-blue-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            <Settings className="w-4 h-4 inline mr-2" />
+            Settings
+          </button>
         </div>
 
         {selectedView === 'overview' && (
@@ -426,6 +442,12 @@ export function CoachDashboard() {
         {selectedView === 'weekly' && <WeeklySummary />}
         {selectedView === 'users' && <UserManagement />}
         {selectedView === 'research' && <ResearchExport />}
+        {selectedView === 'settings' && (
+          <div className="space-y-6">
+            <NotificationSettings />
+            <AccountDeletion />
+          </div>
+        )}
         {selectedView === 'deepdive' && selectedStudentId && (
           <StudentDeepDive
             studentId={selectedStudentId}

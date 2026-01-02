@@ -6,6 +6,11 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https'
+  },
+  ios: {
+    contentInset: 'automatic',
+    scrollEnabled: true,
+    allowsLinkPreview: false
   }
 };
 

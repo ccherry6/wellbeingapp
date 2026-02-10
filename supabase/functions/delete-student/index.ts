@@ -52,33 +52,34 @@ Deno.serve(async (req: Request) => {
 
     // Verify the user is a coach or admin
     if (!["coach", "admin"].includes(coachProfile.actual_role)) {
-      throw new Error("Only coaches and admins can delete students")
+      throw new Error("Only coaches and admins can delete users")
     }
 
-    // Get the student ID from the request body
+    // Get the user ID from the request body
     const { studentId } = await req.json()
     if (!studentId) {
-      throw new Error("Student ID is required")
+      throw new Error("User ID is required")
     }
 
-    console.log(`Coach ${user.id} attempting to delete student: ${studentId}`)
+    // Prevent self-deletion
+    if (studentId === user.id) {
+      throw new Error("Cannot delete your own account")
+    }
 
-    // Verify the target is a student
-    const { data: studentProfile, error: studentError } = await supabaseClient
+    console.log(`Coach ${user.id} attempting to delete user: ${studentId}`)
+
+    // Get the target user profile
+    const { data: targetProfile, error: targetError } = await supabaseClient
       .from("profiles")
       .select("actual_role, full_name, email")
       .eq("id", studentId)
       .single()
 
-    if (studentError || !studentProfile) {
-      throw new Error("Student not found")
+    if (targetError || !targetProfile) {
+      throw new Error("User not found")
     }
 
-    if (studentProfile.actual_role !== "student") {
-      throw new Error("Can only delete student accounts")
-    }
-
-    console.log(`Deleting student: ${studentProfile.full_name} (${studentProfile.email})`)
+    console.log(`Deleting user: ${targetProfile.full_name} (${targetProfile.email})`)
 
     // Delete all related data
     // Most tables have CASCADE foreign keys, but we'll delete explicitly for logging
@@ -198,12 +199,12 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to delete auth user: ${authError.message}`)
     }
 
-    console.log(`Successfully deleted student: ${studentId}`)
+    console.log(`Successfully deleted user: ${studentId}`)
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Student ${studentProfile.full_name} deleted successfully`
+        message: `User ${targetProfile.full_name} deleted successfully`
       }),
       {
         headers: {

@@ -50,12 +50,18 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     try {
+      console.log('🔍 Loading users from profiles table...')
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, role, actual_role, student_id, sport, program_year, created_at, research_code, research_participant, research_notes')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error loading users:', error)
+        throw error
+      }
+
+      console.log(`✅ Loaded ${data?.length || 0} users:`, data)
       setUsers(data || [])
     } catch (err) {
       console.error('Error loading users:', err)

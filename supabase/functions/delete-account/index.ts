@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
     // Delete data in the correct order to respect foreign key constraints
     // Start with tables that depend on other tables
 
-    // 1. Delete resource_deployments (depends on wellness_entries and user_profiles)
+    // 1. Delete resource_deployments (depends on wellness_entries and profiles)
     await supabaseClient
       .from("resource_deployments")
       .delete()
@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
       .delete()
       .eq("user_id", userId)
 
-    // 3. Delete coach_alerts (depends on user_profiles)
+    // 3. Delete coach_alerts (depends on profiles)
     await supabaseClient
       .from("coach_alerts")
       .delete()
@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
       .delete()
       .eq("exported_by", userId)
 
-    // 19. Delete wellness_entries (depends on user_profiles)
+    // 19. Delete wellness_entries (depends on profiles)
     await supabaseClient
       .from("wellness_entries")
       .delete()

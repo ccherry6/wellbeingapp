@@ -17,7 +17,7 @@ interface StudentRowProps {
   }
   currentUserId: string | undefined
   onRoleChange: (userId: string, newRole: string) => void
-  onDelete: (userId: string, userEmail: string) => void
+  onDelete: (userId: string, userEmail: string, userName: string | null) => void
   onResearchCodeUpdate: (userId: string, researchCode: string, notes: string) => void
 }
 
@@ -125,10 +125,10 @@ export function StudentRow({
       </td>
       <td className="py-3 px-4">
         <button
-          onClick={() => onDelete(userProfile.id, userProfile.email)}
+          onClick={() => onDelete(userProfile.id, userProfile.email, userProfile.full_name)}
           disabled={userProfile.id === currentUserId}
           className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Delete user"
+          title="Delete student"
         >
           <Trash2 className="w-4 h-4" />
         </button>

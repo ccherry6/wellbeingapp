@@ -178,22 +178,51 @@ export default function UserManagement() {
     }
   }
 
-  const handleDeleteUser = async (userId: string, userEmail: string) => {
-    if (!confirm(`Are you sure you want to delete ${userEmail}? This cannot be undone.`)) {
+  const handleDeleteUser = async (userId: string, userEmail: string, userName: string | null) => {
+    const confirmMessage = `⚠️ DELETE STUDENT ACCOUNT\n\nAre you sure you want to permanently delete:\n\n${userName || 'Unknown'} (${userEmail})\n\nThis will remove:\n• Their profile and account\n• All wellness entries and data\n• All alerts and notifications\n• All associated records\n\nThis action CANNOT be undone.\n\nType "DELETE" to confirm.`
+
+    const confirmation = prompt(confirmMessage)
+
+    if (confirmation !== 'DELETE') {
+      if (confirmation !== null) {
+        setMessage({ type: 'error', text: 'Deletion cancelled. You must type "DELETE" to confirm.' })
+      }
       return
     }
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId)
+      setMessage({ type: 'success', text: 'Deleting student account...' })
 
-      if (error) throw error
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData.session) {
+        throw new Error('You must be logged in')
+      }
 
-      setMessage({ type: 'success', text: 'User deleted successfully' })
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-student`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`
+          },
+          body: JSON.stringify({ studentId: userId })
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete student')
+      }
+
+      setMessage({ type: 'success', text: result.message || 'Student deleted successfully' })
       loadUsers()
     } catch (err) {
+      console.error('Delete error:', err)
       setMessage({
         type: 'error',
-        text: 'Only database administrators can delete users. You can change their role instead.'
+        text: err instanceof Error ? err.message : 'Failed to delete student'
       })
     }
   }
@@ -470,10 +499,10 @@ export default function UserManagement() {
                       </td>
                       <td className="py-3 px-4">
                         <button
-                          onClick={() => handleDeleteUser(userProfile.id, userProfile.email)}
+                          onClick={() => handleDeleteUser(userProfile.id, userProfile.email, userProfile.full_name)}
                           disabled={userProfile.id === user?.id}
                           className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete user"
+                          title="Delete coach"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

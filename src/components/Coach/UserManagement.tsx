@@ -18,11 +18,13 @@ interface UserProfile {
   research_code: string | null
   research_participant: boolean
   research_notes: string | null
+  is_admin: boolean
 }
 
 export default function UserManagement() {
   const { user } = useAuth()
   const [users, setUsers] = useState<UserProfile[]>([])
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
@@ -51,9 +53,21 @@ export default function UserManagement() {
   const loadUsers = async () => {
     try {
       console.log('🔍 Loading users from profiles table...')
+
+      // Load current user's profile to check admin status
+      if (user?.id) {
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        setCurrentUserProfile(currentProfile)
+      }
+
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, actual_role, student_id, sport, program_year, created_at, research_code, research_participant, research_notes')
+        .select('id, email, full_name, role, actual_role, student_id, sport, program_year, created_at, research_code, research_participant, research_notes, is_admin')
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -252,6 +266,28 @@ export default function UserManagement() {
     }
   }
 
+  const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_admin: !currentIsAdmin })
+        .eq('id', userId)
+
+      if (error) throw error
+
+      setMessage({
+        type: 'success',
+        text: `Admin status ${!currentIsAdmin ? 'granted' : 'revoked'} successfully`
+      })
+      loadUsers()
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to update admin status'
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -271,18 +307,29 @@ export default function UserManagement() {
   const coaches = users.filter(u => u.actual_role === 'coach' || u.actual_role === 'admin')
   const students = users.filter(u => u.actual_role === 'student')
 
+  const isCurrentUserAdmin = currentUserProfile?.is_admin === true
+
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <UserPlus className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Invite New User</h2>
-            <p className="text-sm text-gray-600">Send an invitation to join as coach or student</p>
-          </div>
+      {!isCurrentUserAdmin && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800 text-sm">
+            <strong>Note:</strong> Only admin coaches can invite new coaches. Contact an administrator if you need to add coach users.
+          </p>
         </div>
+      )}
+
+      {isCurrentUserAdmin && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <UserPlus className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Invite New User</h2>
+              <p className="text-sm text-gray-600">Send an invitation to join as coach or student</p>
+            </div>
+          </div>
 
         <form onSubmit={handleInvite} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -380,7 +427,8 @@ export default function UserManagement() {
             Share this code with new users when they register
           </p>
         </div>
-      </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -462,7 +510,7 @@ export default function UserManagement() {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Coach</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Email</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Role</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Admin Status</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
@@ -477,32 +525,49 @@ export default function UserManagement() {
                   coaches.map((userProfile) => (
                     <tr key={userProfile.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">
-                          {userProfile.full_name || 'No name'}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {formatDateAEST(userProfile.created_at)}
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {userProfile.full_name || 'No name'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {formatDateAEST(userProfile.created_at)}
+                            </div>
+                          </div>
+                          {userProfile.is_admin && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              Admin
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">{userProfile.email}</td>
                       <td className="py-3 px-4">
-                        <select
-                          value={userProfile.role}
-                          onChange={(e) => handleRoleChange(userProfile.id, e.target.value)}
-                          disabled={userProfile.id === user?.id}
-                          className="text-sm px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="student">Student</option>
-                          <option value="coach">Coach</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                        {isCurrentUserAdmin ? (
+                          <button
+                            onClick={() => handleToggleAdmin(userProfile.id, userProfile.is_admin)}
+                            disabled={userProfile.id === user?.id}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              userProfile.is_admin
+                                ? 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                            title={userProfile.id === user?.id ? 'Cannot change your own admin status' : 'Toggle admin status'}
+                          >
+                            {userProfile.is_admin ? 'Revoke Admin' : 'Grant Admin'}
+                          </button>
+                        ) : (
+                          <span className="text-sm text-gray-500">
+                            {userProfile.is_admin ? 'Admin' : 'Regular Coach'}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleDeleteUser(userProfile.id, userProfile.email, userProfile.full_name)}
-                          disabled={userProfile.id === user?.id}
+                          disabled={userProfile.id === user?.id || (userProfile.is_admin && !isCurrentUserAdmin)}
                           className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete coach"
+                          title={userProfile.id === user?.id ? 'Cannot delete yourself' : userProfile.is_admin ? 'Only admins can delete admin coaches' : 'Delete coach'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

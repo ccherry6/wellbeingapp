@@ -12,6 +12,7 @@ export interface Database {
           sport: string | null
           program_year: number | null
           notification_settings: any | null
+          is_admin: boolean
           created_at: string
         }
         Insert: {
@@ -24,6 +25,7 @@ export interface Database {
           sport?: string | null
           program_year?: number | null
           notification_settings?: any | null
+          is_admin?: boolean
           created_at?: string
         }
         Update: {
@@ -36,6 +38,7 @@ export interface Database {
           sport?: string | null
           program_year?: number | null
           notification_settings?: any | null
+          is_admin?: boolean
           created_at?: string
         }
       }

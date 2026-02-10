@@ -83,11 +83,15 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           return
         }
 
+        // For non-invitation registrations, role is always 'student'
+        // Coach role can only be assigned via invitation
+        const finalRole = invitationData ? role : 'student'
+
         const { data, error } = await signUp(email, password, {
           full_name: fullName,
-          role,
-          student_id: role === 'student' ? studentId : null,
-          sport: role === 'student' ? sport : null
+          role: finalRole,
+          student_id: finalRole === 'student' ? studentId : null,
+          sport: finalRole === 'student' ? sport : null
         })
         if (error) {
           throw error
@@ -246,34 +250,13 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
           )}
 
           {isSignUp && !invitationData && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Type
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole('student')}
-                  className={`p-3 rounded-lg border-2 transition-colors ${
-                    role === 'student'
-                      ? 'border-blue-900 bg-blue-50 text-blue-900'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('coach')}
-                  className={`p-3 rounded-lg border-2 transition-colors ${
-                    role === 'coach'
-                      ? 'border-blue-900 bg-blue-50 text-blue-900'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  Coach
-                </button>
-              </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-blue-800 text-sm font-medium">
+                Creating a Student Account
+              </p>
+              <p className="text-blue-600 text-xs mt-1">
+                Coach accounts must be invited by an administrator.
+              </p>
             </div>
           )}
 

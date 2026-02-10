@@ -89,7 +89,7 @@ export default function ResearchExport() {
   const loadParticipants = async () => {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id, full_name, research_code, sport, program_year')
         .eq('research_participant', true)
         .not('research_code', 'is', null)

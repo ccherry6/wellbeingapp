@@ -35,7 +35,7 @@ export function AlertHistory() {
         .from('auto_alert_logs')
         .select(`
           *,
-          user_profiles!auto_alert_logs_student_id_fkey (
+          profiles!auto_alert_logs_student_id_fkey (
             full_name,
             email,
             sport
@@ -56,9 +56,9 @@ export function AlertHistory() {
       const formattedAlerts = data.map((alert: any) => ({
         id: alert.id,
         student_id: alert.student_id,
-        student_name: alert.user_profiles?.full_name || 'Unknown',
-        student_email: alert.user_profiles?.email || '',
-        sport: alert.user_profiles?.sport || 'N/A',
+        student_name: alert.profiles?.full_name || 'Unknown',
+        student_email: alert.profiles?.email || '',
+        sport: alert.profiles?.sport || 'N/A',
         metric_triggered: alert.metric_triggered,
         score_value: alert.score_value,
         admin_email: alert.admin_email,

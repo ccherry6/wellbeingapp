@@ -171,9 +171,9 @@ Deno.serve(async (req: Request) => {
       .delete()
       .eq("user_id", userId)
 
-    // 20. Delete user_profiles (depends on auth.users)
+    // 20. Delete profiles (depends on auth.users)
     const { error: profileError } = await supabaseClient
-      .from("user_profiles")
+      .from("profiles")
       .delete()
       .eq("id", userId)
 

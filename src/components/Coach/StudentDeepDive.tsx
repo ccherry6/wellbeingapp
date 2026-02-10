@@ -61,7 +61,7 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
       setLoading(true)
 
       const { data: studentData, error: studentError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', studentId)
         .single()
@@ -118,7 +118,7 @@ export function StudentDeepDive({ studentId, onBack }: StudentDeepDiveProps) {
       }
 
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update(updateData)
         .eq('id', studentId)
 

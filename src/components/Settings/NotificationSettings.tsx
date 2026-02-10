@@ -45,7 +45,7 @@ export function NotificationSettings() {
     try {
       // Get user profile for name
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('full_name, email')
         .eq('id', user.id)
         .single()

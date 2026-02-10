@@ -3,7 +3,7 @@ import { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 
-type Profile = Database['public']['Tables']['user_profiles']['Row']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 let sharedUser: User | null = null
 let sharedUserProfile: Profile | null = null
@@ -98,7 +98,7 @@ const fetchUserProfile = async (userId: string) => {
     console.log('🔄 Fetching profile for user:', userId)
 
     const { data, error } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle()
@@ -116,7 +116,7 @@ const fetchUserProfile = async (userId: string) => {
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       const { data: retryData } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle()
@@ -228,7 +228,7 @@ export function useAuth() {
       console.log('🔄 Actual role:', userProfile.actual_role)
 
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ role: newRole })
         .eq('id', user.id)
         .select()

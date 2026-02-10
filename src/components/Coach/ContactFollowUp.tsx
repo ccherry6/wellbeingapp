@@ -51,7 +51,7 @@ export function ContactFollowUp() {
           contact_notes,
           is_injured_or_sick,
           injury_sickness_notes,
-          user_profiles!inner (
+          profiles!inner (
             id,
             full_name,
             email,
@@ -68,9 +68,9 @@ export function ContactFollowUp() {
         entry_date: entry.entry_date,
         created_at: entry.created_at,
         student_id: entry.user_id,
-        student_name: entry.user_profiles.full_name,
-        student_email: entry.user_profiles.email,
-        sport: entry.user_profiles.sport,
+        student_name: entry.profiles.full_name,
+        student_email: entry.profiles.email,
+        sport: entry.profiles.sport,
         speak_to_who: entry.speak_to_who,
         speak_to_email: entry.speak_to_email,
         contact_status: entry.contact_status || 'pending',

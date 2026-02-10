@@ -50,7 +50,7 @@ export function StudentDashboard() {
         })
 
         await supabase
-          .from('user_profiles')
+          .from('profiles')
           .update({
             consent_given: true,
             consent_date: new Date().toISOString(),

@@ -155,7 +155,7 @@ export function StudentOverview({ students, onStudentClick }: StudentOverviewPro
   const handleSaveSport = async (studentId: string) => {
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ sport: sportValue })
         .eq('id', studentId)
 

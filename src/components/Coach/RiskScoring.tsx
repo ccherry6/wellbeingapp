@@ -27,7 +27,7 @@ export default function RiskScoring() {
   const calculateRiskScores = async () => {
     try {
       const { data: students, error: studentsError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('role', 'student')
 

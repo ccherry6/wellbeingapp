@@ -51,7 +51,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id, email, full_name, role, actual_role, student_id, sport, program_year, created_at, research_code, research_participant, research_notes')
         .order('created_at', { ascending: false })
 
@@ -79,7 +79,7 @@ export default function UserManagement() {
       const inviteUrl = import.meta.env.VITE_APP_URL || window.location.origin
 
       const { data: inviterProfile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('full_name')
         .eq('id', user.id)
         .maybeSingle()
@@ -156,7 +156,7 @@ export default function UserManagement() {
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ role: newRole, actual_role: newRole })
         .eq('id', userId)
 
@@ -197,7 +197,7 @@ export default function UserManagement() {
       const isParticipant = researchCode.trim() !== ''
 
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           research_code: researchCode.trim() || null,
           research_participant: isParticipant,

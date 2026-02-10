@@ -48,7 +48,7 @@ export default function WeeklySummary() {
     setLoading(true)
     try {
       const { data: students, error: studentsError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id')
         .eq('role', 'student')
 

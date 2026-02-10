@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
         user_id,
         email_notifications,
         notification_time,
-        user_profiles!inner (
+        profiles!inner (
           email,
           full_name
         )
@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     const emailResults = [];
     for (const user of usersNeedingReminders) {
       try {
-        const profile = user.user_profiles as any;
+        const profile = user.profiles as any;
         const email = profile.email;
         const name = profile.full_name || email;
 

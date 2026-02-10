@@ -42,7 +42,7 @@ export function CoachDashboard() {
     try {
       // Get all user profiles
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .order('full_name')
 
@@ -87,7 +87,7 @@ export function CoachDashboard() {
         .from('wellness_entries')
         .select(`
           *,
-          user_profiles (
+          profiles (
             full_name,
             student_id,
             sport
@@ -109,9 +109,9 @@ export function CoachDashboard() {
         headers.join(','),
         ...responses.map(row => [
           formatDateAEST(row.created_at),
-          row.user_profiles?.full_name || '',
-          row.user_profiles?.student_id || '',
-          row.user_profiles?.sport || '',
+          row.profiles?.full_name || '',
+          row.profiles?.student_id || '',
+          row.profiles?.sport || '',
           '',
           row.sleep_quality,
           row.sleep_hours,

@@ -142,7 +142,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
 
       try {
         const { data } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('id', user.id)
           .maybeSingle()
@@ -234,7 +234,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
     try {
       console.log('🔍 TESTING SUPABASE CONNECTION...')
       const { data: testData, error: testError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('count')
         .limit(1)
         .single()
@@ -258,7 +258,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
     try {
       console.log('🔍 CHECKING USER PROFILE EXISTS...')
       const { data: profileCheck, error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id')
         .eq('id', user.id)
         .single()

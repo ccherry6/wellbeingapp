@@ -1,7 +1,7 @@
 export interface Database {
   public: {
     Tables: {
-      user_profiles: {
+      profiles: {
         Row: {
           id: string
           email: string

@@ -73,7 +73,7 @@ export function AnalyticsCharts() {
       
       // Fetch all users (students and admins)
       const { data: studentsData, error: studentsError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id, full_name, student_id, sport, role, email')
         .order('full_name')
 
@@ -122,7 +122,7 @@ export function AnalyticsCharts() {
         .from('wellness_entries')
         .select(`
           *,
-          user_profiles!inner (
+          profiles!inner (
             id,
             full_name,
             student_id,
@@ -131,14 +131,14 @@ export function AnalyticsCharts() {
             email
           )
         `)
-        .in('user_profiles.id', usersWithWellnessData.map(u => u.id))
+        .in('profiles.id', usersWithWellnessData.map(u => u.id))
         .gte('created_at', startDate)
         .order('created_at')
 
       if (wellnessError) throw wellnessError
       
       console.log('📈 Wellness data fetched:', wellnessData?.length, 'entries')
-      console.log('👤 Users in wellness data:', [...new Set(wellnessData?.map(entry => entry.user_profiles.email))])
+      console.log('👤 Users in wellness data:', [...new Set(wellnessData?.map(entry => entry.profiles.email))])
 
       // Process data for line charts
       const groupedByDate: { [key: string]: { [studentId: string]: any } } = {}
@@ -148,8 +148,8 @@ export function AnalyticsCharts() {
         if (!groupedByDate[date]) {
           groupedByDate[date] = {}
         }
-        
-        const studentId = entry.user_profiles.id
+
+        const studentId = entry.profiles.id
         if (!groupedByDate[date][studentId]) {
           groupedByDate[date][studentId] = []
         }
@@ -241,7 +241,7 @@ export function AnalyticsCharts() {
         const metricData: any = { metric: label }
         
         studentsWithColors.forEach(student => {
-          const studentEntries = wellnessData?.filter(entry => entry.user_profiles.id === student.id) || []
+          const studentEntries = wellnessData?.filter(entry => entry.profiles.id === student.id) || []
           const values = studentEntries.map(entry => entry[key]).filter(v => v !== null)
           
           if (values.length > 0) {

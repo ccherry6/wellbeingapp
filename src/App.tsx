@@ -6,6 +6,7 @@ import { Header } from './components/Layout/Header'
 import { StudentDashboard } from './components/Student/StudentDashboard'
 import { CoachDashboard } from './components/Coach/CoachDashboard'
 import { BDCLogo } from './components/BDCLogo'
+import { LandingPage } from './components/LandingPage'
 import { supabase } from './lib/supabase'
 
 function AuthListener() {
@@ -67,6 +68,7 @@ function AuthListener() {
 
 function App() {
   const { user, userProfile, loading, error } = useAuth()
+  const [showLanding, setShowLanding] = useState(!user)
 
   // Show error state if there's a connection issue
   if (error) {
@@ -104,7 +106,12 @@ function App() {
     )
   }
 
-  // Show auth form if no user
+  // Show landing page if no user and they haven't clicked to open app
+  if (!user && showLanding) {
+    return <LandingPage onOpenApp={() => setShowLanding(false)} />
+  }
+
+  // Show auth form if no user and they clicked to open app
   if (!user) {
     return <AuthForm onSuccess={() => {}} />
   }

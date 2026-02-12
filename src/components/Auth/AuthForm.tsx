@@ -6,9 +6,10 @@ import { supabase } from '../../lib/supabase'
 
 interface AuthFormProps {
   onSuccess: () => void
+  onBackToLanding?: () => void
 }
 
-export function AuthForm({ onSuccess }: AuthFormProps) {
+export function AuthForm({ onSuccess, onBackToLanding }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [email, setEmail] = useState('')
@@ -156,6 +157,15 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        {onBackToLanding && (
+          <button
+            onClick={onBackToLanding}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-medium">Back to Home</span>
+          </button>
+        )}
         <div className="text-center mb-8">
           <img
             src="/Thrive Wellbeing Logo.png"

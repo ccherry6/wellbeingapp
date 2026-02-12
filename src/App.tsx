@@ -113,7 +113,7 @@ function App() {
 
   // Show auth form if no user and they clicked to open app
   if (!user) {
-    return <AuthForm onSuccess={() => {}} />
+    return <AuthForm onSuccess={() => {}} onBackToLanding={() => setShowLanding(true)} />
   }
 
   // Show loading if user exists but no profile yet

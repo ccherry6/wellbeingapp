@@ -87,7 +87,9 @@ export function Header() {
               <h1 className="text-lg font-semibold text-gray-900">
                 Thrive Wellbeing
               </h1>
-              <p className="text-xs text-gray-600">Empowering High Performance Youth Wellness</p>
+              <p className="text-xs text-gray-600">
+                {userProfile?.organizations?.name || 'Bishop Druitt College'}
+              </p>
             </div>
           </div>
           

@@ -1,6 +1,26 @@
 export interface Database {
   public: {
     Tables: {
+      organizations: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          created_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string
@@ -13,6 +33,7 @@ export interface Database {
           program_year: number | null
           notification_settings: any | null
           is_admin: boolean
+          organization_id: string
           created_at: string
         }
         Insert: {
@@ -26,6 +47,7 @@ export interface Database {
           program_year?: number | null
           notification_settings?: any | null
           is_admin?: boolean
+          organization_id?: string
           created_at?: string
         }
         Update: {
@@ -39,6 +61,7 @@ export interface Database {
           program_year?: number | null
           notification_settings?: any | null
           is_admin?: boolean
+          organization_id?: string
           created_at?: string
         }
       }
@@ -46,6 +69,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          organization_id: string
           sleep_quality: number
           sleep_hours: number
           energy_level: number
@@ -70,6 +94,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          organization_id: string
           sleep_quality: number
           sleep_hours: number
           energy_level: number
@@ -94,6 +119,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          organization_id?: string
           sleep_quality?: number
           sleep_hours?: number
           energy_level?: number

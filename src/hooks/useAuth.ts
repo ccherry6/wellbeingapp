@@ -99,7 +99,7 @@ const fetchUserProfile = async (userId: string) => {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, organizations(id, name, slug)')
       .eq('id', userId)
       .maybeSingle()
 
@@ -109,7 +109,11 @@ const fetchUserProfile = async (userId: string) => {
       console.error('❌ Profile fetch error:', error)
       setSharedState(sharedUser, null, false, `Profile error: ${error.message}`)
     } else if (data) {
-      console.log('✅ Profile loaded:', { role: data.role, name: data.full_name })
+      console.log('✅ Profile loaded:', {
+        role: data.role,
+        name: data.full_name,
+        organization: data.organizations?.name
+      })
       setSharedState(sharedUser, data, false, null)
     } else {
       console.log('⚠️ No profile found, waiting for database trigger...')
@@ -117,7 +121,7 @@ const fetchUserProfile = async (userId: string) => {
 
       const { data: retryData } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, organizations(id, name, slug)')
         .eq('id', userId)
         .maybeSingle()
 

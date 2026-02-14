@@ -143,7 +143,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, organizations(id, name, slug)')
           .eq('id', user.id)
           .maybeSingle()
 
@@ -282,6 +282,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
     // Prepare the data to insert
     const entryData: any = {
       user_id: user.id,
+      organization_id: profile?.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b',
       entry_date: formatDateForInput(new Date()),
       ...responses,
       notes: notes.trim() || null,

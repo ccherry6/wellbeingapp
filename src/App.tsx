@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { AuthForm } from './components/Auth/AuthForm'
 import { UpdatePassword } from './pages/UpdatePassword'
@@ -7,62 +7,28 @@ import { StudentDashboard } from './components/Student/StudentDashboard'
 import { CoachDashboard } from './components/Coach/CoachDashboard'
 import { BDCLogo } from './components/BDCLogo'
 import { LandingPage } from './components/LandingPage'
-import { supabase } from './lib/supabase'
 
 function AuthListener() {
-  // Check IMMEDIATELY if this is a password reset (before any state changes)
   const checkIfPasswordReset = () => {
     const hash = window.location.hash
     if (!hash) return false
 
     const hashParams = new URLSearchParams(hash.substring(1))
-
-    // Check for custom reset token format: #reset=TOKEN
     const resetToken = hashParams.get('reset')
     if (resetToken) return true
 
-    // Check for Supabase native recovery format
     const type = hashParams.get('type')
     const accessToken = hashParams.get('access_token')
-
     return type === 'recovery' && !!accessToken
   }
 
-  const [isPasswordReset, setIsPasswordReset] = useState(checkIfPasswordReset())
-
-  useEffect(() => {
-    console.log('🔍 AuthListener: Initializing')
-    console.log('🔍 Full URL:', window.location.href)
-    console.log('🔍 Hash:', window.location.hash)
-    console.log('🔍 isPasswordReset state:', isPasswordReset)
-
-    // If we already detected it, don't set up listeners
-    if (isPasswordReset) {
-      console.log('✅ PASSWORD RECOVERY ALREADY DETECTED - Showing UpdatePassword')
-      return
-    }
-
-    // Otherwise set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth event:', event)
-
-      if (event === 'PASSWORD_RECOVERY') {
-        console.log('✅ PASSWORD RECOVERY DETECTED via onAuthStateChange event')
-        setIsPasswordReset(true)
-      }
-    })
-
-    return () => {
-      authListener?.subscription.unsubscribe()
-    }
-  }, [isPasswordReset])
+  const [isPasswordReset] = useState(checkIfPasswordReset())
 
   if (isPasswordReset) {
     console.log('🎯 Rendering UpdatePassword component')
     return <UpdatePassword />
   }
 
-  console.log('🎯 Rendering normal App component')
   return <App />
 }
 

@@ -11,6 +11,7 @@ let sharedLoading = true
 let sharedError: string | null = null
 let listeners: Set<() => void> = new Set()
 let initialized = false
+let isFetchingProfile = false
 
 const notifyListeners = () => {
   listeners.forEach(listener => listener())
@@ -24,76 +25,14 @@ const setSharedState = (user: User | null, profile: Profile | null, loading: boo
   notifyListeners()
 }
 
-const initializeAuth = () => {
-  if (initialized) return
-  initialized = true
-
-  console.log('🔄 Initializing auth (once)...')
-
-  supabase.auth.getSession()
-    .then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('❌ Session fetch error:', error)
-        if (error.message?.includes('Refresh Token Not Found') || error.message?.includes('refresh_token_not_found')) {
-          console.log('🔄 Invalid refresh token detected, clearing session...')
-          supabase.auth.signOut()
-          setSharedState(null, null, false, null)
-        } else {
-          setSharedState(null, null, false, `Session error: ${error.message}`)
-        }
-      } else {
-        console.log('✅ Initial session:', session?.user?.email || 'No session')
-        sharedUser = session?.user ?? null
-        sharedLoading = false
-        if (sharedUser) {
-          fetchUserProfile(sharedUser.id)
-        } else {
-          setSharedState(null, null, false, null)
-        }
-      }
-    })
-    .catch((err) => {
-      console.error('❌ Session fetch failed:', err)
-      if (err.message?.includes('Refresh Token Not Found') || err.message?.includes('refresh_token_not_found')) {
-        console.log('🔄 Invalid refresh token detected in catch, clearing session...')
-        supabase.auth.signOut()
-        setSharedState(null, null, false, null)
-      } else {
-        setSharedState(null, null, false, `Connection failed: ${err.message}`)
-      }
-    })
-
-  supabase.auth.onAuthStateChange((event, session) => {
-    console.log('🔄 Auth state change:', event, session?.user?.email || 'No user')
-
-    // Handle sign out explicitly
-    if (event === 'SIGNED_OUT') {
-      console.log('🔄 User signed out, clearing state')
-      setSharedState(null, null, false, null)
-      return
-    }
-
-    // Handle sign in
-    if (event === 'SIGNED_IN' && session?.user) {
-      console.log('🔄 User signed in, fetching profile')
-      sharedUser = session.user
-      sharedError = null
-      fetchUserProfile(session.user.id)
-      return
-    }
-
-    // General state update
-    sharedUser = session?.user ?? null
-    sharedError = null
-    if (sharedUser) {
-      fetchUserProfile(sharedUser.id)
-    } else {
-      setSharedState(null, null, false, null)
-    }
-  })
-}
-
 const fetchUserProfile = async (userId: string) => {
+  if (isFetchingProfile) {
+    console.log('⏭️ Profile fetch already in progress, skipping...')
+    return
+  }
+
+  isFetchingProfile = true
+
   try {
     console.log('🔄 Fetching profile for user:', userId)
 
@@ -116,27 +55,75 @@ const fetchUserProfile = async (userId: string) => {
       })
       setSharedState(sharedUser, data, false, null)
     } else {
-      console.log('⚠️ No profile found, waiting for database trigger...')
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      const { data: retryData } = await supabase
-        .from('profiles')
-        .select('*, organizations(id, name, slug)')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (retryData) {
-        console.log('✅ Profile found on retry')
-        setSharedState(sharedUser, retryData, false, null)
-      } else {
-        console.error('❌ Profile still not found after retry')
-        setSharedState(sharedUser, null, false, 'Profile creation is taking longer than expected. Please refresh the page.')
-      }
+      console.log('⚠️ No profile found')
+      setSharedState(sharedUser, null, false, 'Profile not found. Please contact support.')
     }
   } catch (error) {
     console.error('❌ Profile fetch exception:', error)
     setSharedState(sharedUser, null, false, error instanceof Error ? error.message : 'Unknown error')
+  } finally {
+    isFetchingProfile = false
   }
+}
+
+const initializeAuth = () => {
+  if (initialized) return
+  initialized = true
+
+  console.log('🔄 Initializing auth (once)...')
+
+  supabase.auth.getSession()
+    .then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Session fetch error:', error)
+        setSharedState(null, null, false, null)
+      } else {
+        console.log('✅ Initial session:', session?.user?.email || 'No session')
+        sharedUser = session?.user ?? null
+        sharedLoading = false
+        if (sharedUser) {
+          fetchUserProfile(sharedUser.id)
+        } else {
+          setSharedState(null, null, false, null)
+        }
+      }
+    })
+    .catch((err) => {
+      console.error('❌ Session fetch failed:', err)
+      setSharedState(null, null, false, null)
+    })
+
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('🔄 Auth state change:', event, session?.user?.email || 'No user')
+
+    if (event === 'SIGNED_OUT') {
+      console.log('🔄 User signed out, clearing state')
+      isFetchingProfile = false
+      setSharedState(null, null, false, null)
+      return
+    }
+
+    if (event === 'SIGNED_IN' && session?.user) {
+      console.log('🔄 User signed in, fetching profile')
+      sharedUser = session.user
+      sharedError = null
+      await fetchUserProfile(session.user.id)
+      return
+    }
+
+    if (event === 'TOKEN_REFRESHED' && session?.user) {
+      console.log('🔄 Token refreshed')
+      sharedUser = session.user
+      return
+    }
+
+    sharedUser = session?.user ?? null
+    if (sharedUser && !sharedUserProfile && !isFetchingProfile) {
+      await fetchUserProfile(sharedUser.id)
+    } else if (!sharedUser) {
+      setSharedState(null, null, false, null)
+    }
+  })
 }
 
 export function useAuth() {
@@ -259,7 +246,8 @@ export function useAuth() {
     try {
       console.log('🔄 Signing out...')
 
-      // Sign out from Supabase first (this clears all storage automatically)
+      isFetchingProfile = false
+
       const { error } = await supabase.auth.signOut()
 
       if (error) {
@@ -269,19 +257,16 @@ export function useAuth() {
 
       console.log('✅ Sign out successful')
 
-      // Clear shared state
       setSharedState(null, null, false, null)
 
-      // Force a clean reload to login page
       window.location.href = '/'
 
       return { error: null }
     } catch (error) {
       console.error('❌ Sign out exception:', error)
-      // Even if there's an error, try to clear state and reload
+
       setSharedState(null, null, false, null)
 
-      // Try to clear any lingering session data manually as fallback
       try {
         localStorage.clear()
         sessionStorage.clear()

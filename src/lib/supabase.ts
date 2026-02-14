@@ -21,7 +21,23 @@ export const supabase = createClient<Database>(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storageKey: 'thrive-auth',
+      storage: window.localStorage
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'thrive-wellbeing'
+      }
+    },
+    db: {
+      schema: 'public'
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 2
+      }
     }
   }
 )

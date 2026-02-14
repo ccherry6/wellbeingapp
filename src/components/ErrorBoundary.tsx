@@ -27,7 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to monitoring service if available
+    console.error('🚨 ErrorBoundary caught an error:', error)
+    console.error('🚨 Error info:', errorInfo)
+    console.error('🚨 Component stack:', errorInfo.componentStack)
   }
 
   handleReset = () => {

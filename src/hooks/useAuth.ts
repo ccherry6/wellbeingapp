@@ -33,14 +33,21 @@ const fetchUserProfile = async (userId: string) => {
 
   isFetchingProfile = true
 
+  // Add timeout to prevent hanging
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+  })
+
   try {
     console.log('🔄 Fetching profile for user:', userId)
 
-    const { data, error } = await supabase
+    const fetchPromise = supabase
       .from('profiles')
       .select('*, organizations(id, name, slug)')
       .eq('id', userId)
       .maybeSingle()
+
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any
 
     console.log('📊 Profile fetch result:', { data: !!data, error: error?.message })
 
@@ -72,8 +79,17 @@ const initializeAuth = () => {
 
   console.log('🔄 Initializing auth (once)...')
 
+  // Add a timeout to prevent infinite loading
+  const loadingTimeout = setTimeout(() => {
+    if (sharedLoading) {
+      console.warn('⚠️ Auth initialization timeout - forcing completion')
+      setSharedState(sharedUser, sharedUserProfile, false, null)
+    }
+  }, 10000) // 10 second timeout
+
   supabase.auth.getSession()
     .then(({ data: { session }, error }) => {
+      clearTimeout(loadingTimeout)
       if (error) {
         console.error('❌ Session fetch error:', error)
         setSharedState(null, null, false, null)
@@ -89,6 +105,7 @@ const initializeAuth = () => {
       }
     })
     .catch((err) => {
+      clearTimeout(loadingTimeout)
       console.error('❌ Session fetch failed:', err)
       setSharedState(null, null, false, null)
     })

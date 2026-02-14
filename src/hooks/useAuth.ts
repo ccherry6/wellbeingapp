@@ -79,6 +79,18 @@ const initializeAuth = () => {
 
   console.log('🔄 Initializing auth (once)...')
 
+  // FORCE LOGOUT - Clear all auth state
+  console.log('🚪 Forcing logout and clearing all sessions')
+  localStorage.clear()
+  sessionStorage.clear()
+
+  supabase.auth.signOut().then(() => {
+    console.log('✅ Forced logout complete')
+    setSharedState(null, null, false, null)
+  })
+
+  return
+
   // Add a timeout to prevent infinite loading
   const loadingTimeout = setTimeout(() => {
     if (sharedLoading) {

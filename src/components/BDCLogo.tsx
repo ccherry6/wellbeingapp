@@ -26,7 +26,7 @@ export function BDCLogo({ className = "h-12 w-auto", alt = "Thrive Wellbeing Log
         </div>
       )}
       <img
-        src="/Thrive Wellbeing Logo.png"
+        src="/Thrive-Wellbeing-Logo.png"
         alt={alt}
         className={`${className} object-contain ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0'} transition-opacity duration-300`}
         onLoad={() => setImageLoaded(true)}

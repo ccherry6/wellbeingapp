@@ -168,7 +168,7 @@ export function AuthForm({ onSuccess, onBackToLanding }: AuthFormProps) {
         )}
         <div className="text-center mb-8">
           <img
-            src="/Thrive Wellbeing Logo.png"
+            src="/Thrive-Wellbeing-Logo.png"
             alt="Thrive Wellbeing Logo"
             className="h-40 w-auto mx-auto mb-4 object-contain"
           />

@@ -141,17 +141,31 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       if (!user) return
 
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
-          .select('*, organizations(id, name, slug)')
+          .select('*')
           .eq('id', user.id)
           .maybeSingle()
 
+        if (error) {
+          console.error('Error fetching profile:', error)
+          return
+        }
+
         if (data) {
+          console.log('✅ Profile loaded:', {
+            id: data.id,
+            role: data.role,
+            actual_role: data.actual_role,
+            organization_id: data.organization_id,
+            has_org_id: !!data.organization_id
+          })
           setProfile(data)
+        } else {
+          console.warn('⚠️ No profile found for user')
         }
       } catch (err) {
-        console.error('Error fetching profile:', err)
+        console.error('❌ Exception fetching profile:', err)
       }
     }
 
@@ -279,10 +293,20 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       return
     }
 
+    // Ensure we have organization_id
+    const organizationId = profile?.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b'
+
+    console.log('🏢 ORGANIZATION ID CHECK:', {
+      profileOrgId: profile?.organization_id,
+      fallbackOrgId: '5b494b69-5782-441c-8e99-9a886fd1616b',
+      finalOrgId: organizationId,
+      hasProfile: !!profile
+    })
+
     // Prepare the data to insert
     const entryData: any = {
       user_id: user.id,
-      organization_id: profile?.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b',
+      organization_id: organizationId,
       entry_date: formatDateForInput(new Date()),
       ...responses,
       notes: notes.trim() || null,
@@ -322,15 +346,26 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
     }
 
     console.log('💾 PREPARED ENTRY DATA:', entryData)
+    console.log('💾 DATA VALIDATION:', {
+      hasUserId: !!entryData.user_id,
+      hasOrgId: !!entryData.organization_id,
+      hasEntryDate: !!entryData.entry_date,
+      userIdValue: entryData.user_id,
+      orgIdValue: entryData.organization_id,
+      entryDateValue: entryData.entry_date
+    })
 
     try {
       console.log('💾 ATTEMPTING TO SAVE WELLNESS ENTRY...')
       // First save the wellness entry
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('wellness_entries')
         .upsert(entryData, {
           onConflict: 'user_id,entry_date'
         })
+        .select()
+
+      console.log('💾 UPSERT RESULT:', { insertedData, error })
       
       if (error) {
         console.error('❌ WELLNESS ENTRY SAVE ERROR:', error)
@@ -461,6 +496,8 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       console.error('❌ FULL ERROR OBJECT:', JSON.stringify(error, null, 2))
 
       let errorMessage = 'Unknown error'
+      let errorDetails = ''
+
       if (error instanceof Error) {
         errorMessage = error.message
         console.error('❌ ERROR INSTANCE DETAILS:', {
@@ -469,8 +506,30 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
           stack: error.stack,
           cause: error.cause
         })
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle Supabase error objects
+        const supabaseError = error as any
+        if (supabaseError.message) {
+          errorMessage = supabaseError.message
+        }
+        if (supabaseError.code) {
+          errorDetails = `Error code: ${supabaseError.code}`
+        }
+        if (supabaseError.details) {
+          errorDetails += ` | Details: ${supabaseError.details}`
+        }
+        if (supabaseError.hint) {
+          errorDetails += ` | Hint: ${supabaseError.hint}`
+        }
+        console.error('❌ SUPABASE ERROR DETAILS:', {
+          code: supabaseError.code,
+          message: supabaseError.message,
+          details: supabaseError.details,
+          hint: supabaseError.hint
+        })
       } else {
         console.error('❌ NON-ERROR OBJECT THROWN:', typeof error, error)
+        errorMessage = String(error)
       }
 
       // Provide more specific error messages based on common issues
@@ -482,8 +541,12 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
         errorMessage = 'Permission denied. Please refresh the page and try again.'
       }
 
-      console.error('❌ FINAL ERROR MESSAGE:', errorMessage)
-      setError(`Failed to save: ${errorMessage}`)
+      const fullErrorMessage = errorDetails
+        ? `${errorMessage} (${errorDetails})`
+        : errorMessage
+
+      console.error('❌ FINAL ERROR MESSAGE:', fullErrorMessage)
+      setError(`Failed to save: ${fullErrorMessage}`)
       setSaving(false)
     }
   }

@@ -268,12 +268,13 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       return
     }
 
-    // Check that user profile exists in database
+    // Check that user profile exists and GET organization_id from database
+    let organizationId: string
     try {
-      console.log('🔍 CHECKING USER PROFILE EXISTS...')
+      console.log('🔍 CHECKING USER PROFILE EXISTS AND FETCHING ORGANIZATION_ID...')
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, organization_id')
         .eq('id', user.id)
         .single()
 
@@ -285,23 +286,22 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
         setSaving(false)
         return
       }
+
+      // Use the organization_id from the database, with fallback
+      organizationId = profileCheck.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b'
+
       console.log('✅ USER PROFILE EXISTS')
+      console.log('🏢 ORGANIZATION ID FROM DATABASE:', {
+        dbOrgId: profileCheck.organization_id,
+        finalOrgId: organizationId,
+        usingFallback: !profileCheck.organization_id
+      })
     } catch (profileCheckError) {
       console.error('❌ PROFILE CHECK EXCEPTION:', profileCheckError)
       setError(`Unable to verify user profile: ${profileCheckError instanceof Error ? profileCheckError.message : 'Unknown error'}. Please refresh and try again.`)
       setSaving(false)
       return
     }
-
-    // Ensure we have organization_id
-    const organizationId = profile?.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b'
-
-    console.log('🏢 ORGANIZATION ID CHECK:', {
-      profileOrgId: profile?.organization_id,
-      fallbackOrgId: '5b494b69-5782-441c-8e99-9a886fd1616b',
-      finalOrgId: organizationId,
-      hasProfile: !!profile
-    })
 
     // Prepare the data to insert
     const entryData: any = {

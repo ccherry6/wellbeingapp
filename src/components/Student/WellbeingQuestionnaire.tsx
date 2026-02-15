@@ -268,56 +268,9 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       return
     }
 
-    // Check that user profile exists and GET organization_id from database
-    let organizationId: string | null = null
-    try {
-      console.log('🔍 CHECKING USER PROFILE EXISTS AND FETCHING ORGANIZATION_ID...')
-      const { data: profileCheck, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, organization_id, role, actual_role')
-        .eq('id', user.id)
-        .single()
-
-      console.log('🔍 Profile check result:', JSON.stringify({ profileCheck, profileError }, null, 2))
-
-      if (profileError || !profileCheck) {
-        console.error('❌ PROFILE CHECK FAILED:', profileError)
-        setError(`User profile not found: ${profileError?.message || 'Profile does not exist'}. Please refresh the page and try again.`)
-        setSaving(false)
-        return
-      }
-
-      // Use the organization_id from the database, with fallback
-      organizationId = profileCheck.organization_id || '5b494b69-5782-441c-8e99-9a886fd1616b'
-
-      console.log('✅ USER PROFILE EXISTS')
-      console.log('🏢 ORGANIZATION ID FROM DATABASE:', {
-        dbOrgId: profileCheck.organization_id,
-        finalOrgId: organizationId,
-        usingFallback: !profileCheck.organization_id,
-        typeOfOrgId: typeof organizationId,
-        isNull: organizationId === null,
-        isUndefined: organizationId === undefined
-      })
-
-      // Double-check organizationId is not null
-      if (!organizationId) {
-        console.error('❌ ORGANIZATION ID IS NULL/UNDEFINED AFTER FETCH')
-        setError('Organization ID is missing from your profile. Please contact support.')
-        setSaving(false)
-        return
-      }
-    } catch (profileCheckError) {
-      console.error('❌ PROFILE CHECK EXCEPTION:', profileCheckError)
-      setError(`Unable to verify user profile: ${profileCheckError instanceof Error ? profileCheckError.message : 'Unknown error'}. Please refresh and try again.`)
-      setSaving(false)
-      return
-    }
-
     // Prepare the data to insert
     const entryData: any = {
       user_id: user.id,
-      organization_id: organizationId,
       entry_date: formatDateForInput(new Date()),
       ...responses,
       notes: notes.trim() || null,
@@ -356,32 +309,8 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       }
     }
 
-    console.log('💾 PREPARED ENTRY DATA:', JSON.stringify(entryData, null, 2))
-    console.log('💾 DATA VALIDATION:', {
-      hasUserId: !!entryData.user_id,
-      hasOrgId: !!entryData.organization_id,
-      hasEntryDate: !!entryData.entry_date,
-      userIdValue: entryData.user_id,
-      orgIdValue: entryData.organization_id,
-      entryDateValue: entryData.entry_date,
-      orgIdType: typeof entryData.organization_id,
-      orgIdIsNull: entryData.organization_id === null,
-      orgIdIsUndefined: entryData.organization_id === undefined,
-      allKeys: Object.keys(entryData)
-    })
-
-    // Final sanity check before sending to database
-    if (!entryData.organization_id) {
-      console.error('❌ CRITICAL: organization_id is missing from entryData!')
-      console.error('Full entryData:', JSON.stringify(entryData, null, 2))
-      setError('CRITICAL ERROR: Organization ID missing. This should not happen. Please refresh and try again.')
-      setSaving(false)
-      return
-    }
-
     try {
       console.log('💾 ATTEMPTING TO SAVE WELLNESS ENTRY...')
-      console.log('💾 SENDING TO SUPABASE:', JSON.stringify(entryData, null, 2))
 
       // First save the wellness entry
       const { data: insertedData, error } = await supabase

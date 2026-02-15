@@ -546,6 +546,10 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
         : errorMessage
 
       console.error('❌ FINAL ERROR MESSAGE:', fullErrorMessage)
+
+      // Show error in browser alert for visibility
+      alert(`❌ ERROR SAVING WELLNESS ENTRY:\n\n${fullErrorMessage}\n\nPlease screenshot this message and contact support.`)
+
       setError(`Failed to save: ${fullErrorMessage}`)
       setSaving(false)
     }
@@ -698,14 +702,26 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600 text-sm">
-                <strong>Error:</strong> {error}
-              </p>
+        {error && (
+          <div className="mb-6 bg-red-100 border-2 border-red-500 rounded-xl p-4 sm:p-6">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-bold text-red-900 mb-2">
+                  Error Saving Entry
+                </h3>
+                <p className="text-sm text-red-800 whitespace-pre-wrap">
+                  {error}
+                </p>
+                <p className="text-xs text-red-700 mt-2">
+                  Please screenshot this error and send it to your coach.
+                </p>
+              </div>
             </div>
-          )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           
           {/* Group questions into pairs for mobile */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

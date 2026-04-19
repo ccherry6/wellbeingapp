@@ -218,6 +218,7 @@ export default function ResearchExport() {
       const identifierHeader = identifierMode === 'anonymized' ? 'identifier' : 'full_name'
       const headers = [
         identifierHeader,
+        'surname',
         identifierMode === 'full' ? 'email' : null,
         identifierMode === 'full' ? 'student_id' : null,
         'sport',
@@ -241,8 +242,12 @@ export default function ResearchExport() {
           identifier = u.full_name || u.email
         }
 
+        const nameParts = (u.full_name || '').trim().split(/\s+/)
+        const surname = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0] || ''
+
         const row: string[] = [
           `"${identifier}"`,
+          `"${surname}"`,
         ]
 
         if (identifierMode === 'full') {

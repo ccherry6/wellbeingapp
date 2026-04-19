@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Download, FileText, Calendar, Filter, CheckCircle, AlertCircle, Microscope, Database } from 'lucide-react'
+import { Download, FileText, Calendar, Filter, CheckCircle, AlertCircle, Microscope, Database, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { formatDateAEST } from '../../lib/dateUtils'
 
-interface ResearchParticipant {
+interface UserProfile {
   id: string
   full_name: string
-  research_code: string
+  email: string
+  student_id: string | null
+  research_code: string | null
   sport: string | null
   program_year: number | null
+  role: string
+  research_participant: boolean | null
 }
 
 interface WellnessEntry {
@@ -60,22 +64,28 @@ const METRIC_FIELDS = [
   { id: 'is_injured_or_sick', label: 'Injured/Sick Status', category: 'Health' },
 ]
 
+type ExportMode = 'all_users' | 'research_only'
+
 export default function ResearchExport() {
   const { user } = useAuth()
-  const [participants, setParticipants] = useState<ResearchParticipant[]>([])
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selectedFields, setSelectedFields] = useState<string[]>(METRIC_FIELDS.map(f => f.id))
   const [includeNotes, setIncludeNotes] = useState(false)
+  const [includeInjuryNotes, setIncludeInjuryNotes] = useState(false)
   const [exportNotes, setExportNotes] = useState('')
+  const [exportMode, setExportMode] = useState<ExportMode>('all_users')
+  const [identifierMode, setIdentifierMode] = useState<'anonymized' | 'full'>('anonymized')
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [exportHistory, setExportHistory] = useState<ExportHistoryItem[]>([])
+  const [userFilter, setUserFilter] = useState('')
 
   useEffect(() => {
-    loadParticipants()
+    loadUsers()
     loadExportHistory()
 
     const today = new Date()
@@ -86,20 +96,23 @@ export default function ResearchExport() {
     setStartDate(thirtyDaysAgo.toISOString().split('T')[0])
   }, [])
 
-  const loadParticipants = async () => {
+  useEffect(() => {
+    const filtered = getFilteredUsers()
+    setSelectedUsers(filtered.map(u => u.id))
+  }, [exportMode, allUsers])
+
+  const loadUsers = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, research_code, sport, program_year')
-        .eq('research_participant', true)
-        .not('research_code', 'is', null)
-        .order('research_code')
+        .select('id, full_name, email, student_id, research_code, sport, program_year, role, research_participant')
+        .order('full_name')
 
       if (error) throw error
-      setParticipants(data || [])
-      setSelectedParticipants((data || []).map(p => p.id))
+      setAllUsers(data || [])
+      setSelectedUsers((data || []).map(u => u.id))
     } catch (err) {
-      console.error('Error loading participants:', err)
+      console.error('Error loading users:', err)
     } finally {
       setLoading(false)
     }
@@ -120,27 +133,44 @@ export default function ResearchExport() {
     }
   }
 
-  const toggleParticipant = (participantId: string) => {
-    setSelectedParticipants(prev =>
-      prev.includes(participantId)
-        ? prev.filter(id => id !== participantId)
-        : [...prev, participantId]
+  const getFilteredUsers = () => {
+    let users = allUsers
+    if (exportMode === 'research_only') {
+      users = users.filter(u => u.research_participant && u.research_code)
+    }
+    if (userFilter.trim()) {
+      const q = userFilter.toLowerCase()
+      users = users.filter(u =>
+        u.full_name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.student_id?.toLowerCase().includes(q) ||
+        u.research_code?.toLowerCase().includes(q)
+      )
+    }
+    return users
+  }
+
+  const filteredUsers = getFilteredUsers()
+
+  const toggleUser = (userId: string) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     )
   }
 
-  const toggleAllParticipants = () => {
-    if (selectedParticipants.length === participants.length) {
-      setSelectedParticipants([])
+  const toggleAllUsers = () => {
+    const filtered = filteredUsers
+    const allSelected = filtered.every(u => selectedUsers.includes(u.id))
+    if (allSelected) {
+      setSelectedUsers(prev => prev.filter(id => !filtered.some(u => u.id === id)))
     } else {
-      setSelectedParticipants(participants.map(p => p.id))
+      setSelectedUsers(prev => [...new Set([...prev, ...filtered.map(u => u.id)])])
     }
   }
 
   const toggleField = (fieldId: string) => {
     setSelectedFields(prev =>
-      prev.includes(fieldId)
-        ? prev.filter(id => id !== fieldId)
-        : [...prev, fieldId]
+      prev.includes(fieldId) ? prev.filter(id => id !== fieldId) : [...prev, fieldId]
     )
   }
 
@@ -153,16 +183,14 @@ export default function ResearchExport() {
   }
 
   const handleExport = async () => {
-    if (selectedParticipants.length === 0) {
-      setMessage({ type: 'error', text: 'Please select at least one participant' })
+    if (selectedUsers.length === 0) {
+      setMessage({ type: 'error', text: 'Please select at least one user' })
       return
     }
-
     if (selectedFields.length === 0) {
       setMessage({ type: 'error', text: 'Please select at least one field to export' })
       return
     }
-
     if (!startDate || !endDate) {
       setMessage({ type: 'error', text: 'Please select a date range' })
       return
@@ -175,48 +203,79 @@ export default function ResearchExport() {
       const { data: entries, error } = await supabase
         .from('wellness_entries')
         .select('*')
-        .in('user_id', selectedParticipants)
+        .in('user_id', selectedUsers)
         .gte('entry_date', startDate)
         .lte('entry_date', endDate)
+        .order('user_id', { ascending: true })
         .order('entry_date', { ascending: true })
 
       if (error) throw error
 
-      const participantMap = new Map(participants.map(p => [p.id, p]))
+      const userMap = new Map(allUsers.map(u => [u.id, u]))
 
       const csvRows: string[] = []
-      const headers = ['research_code', 'entry_date', ...selectedFields]
+
+      const identifierHeader = identifierMode === 'anonymized' ? 'identifier' : 'full_name'
+      const headers = [
+        identifierHeader,
+        identifierMode === 'full' ? 'email' : null,
+        identifierMode === 'full' ? 'student_id' : null,
+        'sport',
+        'program_year',
+        'entry_date',
+        ...selectedFields,
+      ].filter(Boolean) as string[]
+
       if (includeNotes) headers.push('notes')
+      if (includeInjuryNotes) headers.push('injury_sickness_notes')
       csvRows.push(headers.join(','))
 
       entries.forEach((entry: WellnessEntry) => {
-        const participant = participantMap.get(entry.user_id)
-        if (!participant) return
+        const u = userMap.get(entry.user_id)
+        if (!u) return
 
-        const row = [
-          participant.research_code,
-          entry.entry_date,
-          ...selectedFields.map(field => {
-            const value = entry[field as keyof WellnessEntry]
-            return value !== null && value !== undefined ? String(value) : ''
-          })
+        let identifier: string
+        if (identifierMode === 'anonymized') {
+          identifier = u.research_code || `USER-${entry.user_id.slice(0, 8)}`
+        } else {
+          identifier = u.full_name || u.email
+        }
+
+        const row: string[] = [
+          `"${identifier}"`,
         ]
+
+        if (identifierMode === 'full') {
+          row.push(`"${u.email || ''}"`)
+          row.push(`"${u.student_id || ''}"`)
+        }
+
+        row.push(`"${u.sport || ''}"`)
+        row.push(`"${u.program_year || ''}"`)
+        row.push(entry.entry_date)
+
+        selectedFields.forEach(field => {
+          const value = entry[field as keyof WellnessEntry]
+          row.push(value !== null && value !== undefined ? String(value) : '')
+        })
 
         if (includeNotes) {
           const notes = entry.notes || ''
           row.push(`"${notes.replace(/"/g, '""')}"`)
         }
 
+        if (includeInjuryNotes) {
+          const injuryNotes = entry.injury_sickness_notes || ''
+          row.push(`"${injuryNotes.replace(/"/g, '""')}"`)
+        }
+
         csvRows.push(row.join(','))
       })
 
       const csvContent = csvRows.join('\n')
-
-      // Use data URI for better mobile compatibility
       const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
       const link = document.createElement('a')
-      const filename = `research_export_${startDate}_to_${endDate}_${new Date().getTime()}.csv`
-
+      const filename = `wellbeing_export_${startDate}_to_${endDate}_${new Date().getTime()}.csv`
       link.setAttribute('href', dataUri)
       link.setAttribute('download', filename)
       link.style.display = 'none'
@@ -224,8 +283,8 @@ export default function ResearchExport() {
       link.click()
       document.body.removeChild(link)
 
-      const researchCodes = selectedParticipants
-        .map(id => participantMap.get(id)?.research_code)
+      const researchCodes = selectedUsers
+        .map(id => userMap.get(id)?.research_code || userMap.get(id)?.full_name || id)
         .filter(Boolean) as string[]
 
       await supabase
@@ -234,7 +293,7 @@ export default function ResearchExport() {
           exported_by: user?.id,
           start_date: startDate,
           end_date: endDate,
-          participant_count: selectedParticipants.length,
+          participant_count: selectedUsers.length,
           research_codes: researchCodes,
           fields_exported: selectedFields,
           notes: exportNotes.trim() || null
@@ -242,7 +301,7 @@ export default function ResearchExport() {
 
       setMessage({
         type: 'success',
-        text: `Successfully exported ${entries.length} records from ${selectedParticipants.length} participants`
+        text: `Successfully exported ${entries.length} records from ${selectedUsers.length} users`
       })
 
       loadExportHistory()
@@ -260,21 +319,7 @@ export default function ResearchExport() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Loading research participants...</div>
-      </div>
-    )
-  }
-
-  if (participants.length === 0) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center">
-          <Microscope className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Research Participants</h3>
-          <p className="text-gray-600 mb-4">
-            No students have been assigned research codes yet. Assign research codes in the User Management tab first.
-          </p>
-        </div>
+        <div className="text-gray-600">Loading users...</div>
       </div>
     )
   }
@@ -285,6 +330,8 @@ export default function ResearchExport() {
     return acc
   }, {} as Record<string, typeof METRIC_FIELDS>)
 
+  const allFilteredSelected = filteredUsers.length > 0 && filteredUsers.every(u => selectedUsers.includes(u.id))
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -294,7 +341,67 @@ export default function ResearchExport() {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Research Data Export</h2>
-            <p className="text-sm text-gray-600">Export anonymized wellbeing data for research analysis</p>
+            <p className="text-sm text-gray-600">Export wellbeing data as CSV for research analysis</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">User Scope</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setExportMode('all_users')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                  exportMode === 'all_users'
+                    ? 'bg-green-600 text-white border-green-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 inline mr-1.5" />
+                All Users
+              </button>
+              <button
+                onClick={() => setExportMode('research_only')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                  exportMode === 'research_only'
+                    ? 'bg-green-600 text-white border-green-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-green-400'
+                }`}
+              >
+                <Microscope className="w-3.5 h-3.5 inline mr-1.5" />
+                Research Participants Only
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">Identifier in Export</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIdentifierMode('anonymized')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                  identifierMode === 'anonymized'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                Anonymized Code
+              </button>
+              <button
+                onClick={() => setIdentifierMode('full')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                  identifierMode === 'full'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                Full Name + Email
+              </button>
+            </div>
+            {identifierMode === 'full' && (
+              <p className="text-xs text-amber-700 mt-1.5 bg-amber-50 px-2 py-1 rounded">
+                Full identifiers included - handle with care
+              </p>
+            )}
           </div>
         </div>
 
@@ -312,7 +419,7 @@ export default function ResearchExport() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                   />
                 </div>
                 <div>
@@ -321,7 +428,7 @@ export default function ResearchExport() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                   />
                 </div>
               </div>
@@ -331,43 +438,61 @@ export default function ResearchExport() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <Filter className="w-4 h-4" />
-                  Participants ({selectedParticipants.length}/{participants.length})
+                  Users ({selectedUsers.filter(id => filteredUsers.some(u => u.id === id)).length}/{filteredUsers.length} selected)
                 </h3>
                 <button
-                  onClick={toggleAllParticipants}
+                  onClick={toggleAllUsers}
                   className="text-xs text-green-600 hover:text-green-700 font-medium"
                 >
-                  {selectedParticipants.length === participants.length ? 'Deselect All' : 'Select All'}
+                  {allFilteredSelected ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
               <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
-                {participants.map((participant) => (
-                  <label
-                    key={participant.id}
-                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedParticipants.includes(participant.id)}
-                      onChange={() => toggleParticipant(participant.id)}
-                      className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono font-medium text-green-700 text-sm">
-                          {participant.research_code}
-                        </span>
-                        <span className="text-gray-400">→</span>
-                        <span className="font-medium text-gray-900 text-sm">
-                          {participant.full_name}
-                        </span>
+                {filteredUsers.length === 0 ? (
+                  <div className="px-3 py-4 text-sm text-gray-500 text-center">No users found</div>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <label
+                      key={u.id}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(u.id)}
+                        onChange={() => toggleUser(u.id)}
+                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900 text-sm truncate">
+                            {u.full_name || u.email}
+                          </span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            u.role === 'coach' || u.role === 'admin'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {u.role}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {u.research_code && (
+                            <span className="font-mono text-green-700 mr-2">{u.research_code}</span>
+                          )}
+                          {u.sport && <span>{u.sport}</span>}
+                          {u.program_year && <span> · Year {u.program_year}</span>}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {participant.sport} {participant.program_year ? `• Year ${participant.program_year}` : ''}
-                      </div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -386,7 +511,7 @@ export default function ResearchExport() {
                   {selectedFields.length === METRIC_FIELDS.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
-              <div className="border border-gray-200 rounded-lg max-h-80 overflow-y-auto">
+              <div className="border border-gray-200 rounded-lg max-h-72 overflow-y-auto">
                 {Object.entries(groupedFields).map(([category, fields]) => (
                   <div key={category} className="border-b border-gray-100 last:border-b-0">
                     <div className="px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-700">
@@ -411,7 +536,7 @@ export default function ResearchExport() {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
@@ -419,11 +544,22 @@ export default function ResearchExport() {
                   onChange={(e) => setIncludeNotes(e.target.checked)}
                   className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                 />
-                Include student notes (free-text fields)
+                Include student notes (free-text)
               </label>
-              <p className="text-xs text-gray-500 mt-1 ml-6">
-                Warning: Notes may contain identifiable information
-              </p>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeInjuryNotes}
+                  onChange={(e) => setIncludeInjuryNotes(e.target.checked)}
+                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                />
+                Include injury/sickness notes
+              </label>
+              {(includeNotes || includeInjuryNotes) && (
+                <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1.5 rounded ml-6">
+                  Free-text notes may contain identifiable information
+                </p>
+              )}
             </div>
 
             <div>
@@ -434,7 +570,7 @@ export default function ResearchExport() {
                 value={exportNotes}
                 onChange={(e) => setExportNotes(e.target.value)}
                 placeholder="Add notes about this export for your records..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                 rows={3}
               />
             </div>
@@ -444,11 +580,13 @@ export default function ResearchExport() {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <button
             onClick={handleExport}
-            disabled={exporting || selectedParticipants.length === 0 || selectedFields.length === 0}
+            disabled={exporting || selectedUsers.length === 0 || selectedFields.length === 0}
             className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Download className="w-5 h-5" />
-            {exporting ? 'Generating Export...' : 'Export Anonymized Data'}
+            {exporting
+              ? 'Generating Export...'
+              : `Export ${selectedUsers.length} User${selectedUsers.length !== 1 ? 's' : ''} to CSV`}
           </button>
         </div>
 
@@ -462,9 +600,7 @@ export default function ResearchExport() {
               ) : (
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               )}
-              <p className={`text-sm ${
-                message.type === 'success' ? 'text-green-800' : 'text-red-800'
-              }`}>
+              <p className={`text-sm ${message.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
                 {message.text}
               </p>
             </div>
@@ -480,10 +616,9 @@ export default function ResearchExport() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Export History</h3>
-              <p className="text-sm text-gray-600">Recent research data exports</p>
+              <p className="text-sm text-gray-600">Recent data exports</p>
             </div>
           </div>
-
           <div className="space-y-3">
             {exportHistory.map((record) => (
               <div key={record.id} className="p-4 border border-gray-200 rounded-lg">
@@ -498,14 +633,11 @@ export default function ResearchExport() {
                       </span>
                     </div>
                     <div className="text-sm text-gray-600">
-                      {record.participant_count} participants • {record.fields_exported.length} fields
+                      {record.participant_count} users · {record.fields_exported.length} fields
                     </div>
                     {record.notes && (
                       <div className="text-xs text-gray-500 mt-1 italic">{record.notes}</div>
                     )}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Codes: {record.research_codes.join(', ')}
                   </div>
                 </div>
               </div>

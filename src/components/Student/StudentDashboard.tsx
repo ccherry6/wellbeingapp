@@ -10,6 +10,7 @@ import { SkipConfirmation } from './SkipConfirmation'
 import { useAuth } from '../../hooks/useAuth'
 import { format } from 'date-fns'
 import { supabase } from '../../lib/supabase'
+import { BDCLogo } from '../BDCLogo'
 
 export function StudentDashboard() {
   const { user } = useAuth()
@@ -94,15 +95,11 @@ export function StudentDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-center mb-2">
+        <div className="flex items-center justify-center mb-2 gap-4">
           <h1 className="text-3xl font-bold text-gray-900">
             Welcome to your Wellbeing Hub
           </h1>
-          <img
-            src="/Thrive Wellbeing Logo.png"
-            alt="Thrive Wellbeing Logo"
-            className="h-10 w-auto ml-4 object-contain"
-          />
+          <BDCLogo className="h-12 w-auto" />
         </div>
         <p className="text-gray-600 text-center mb-1">
           {format(new Date(), 'EEEE, MMMM do, yyyy')}

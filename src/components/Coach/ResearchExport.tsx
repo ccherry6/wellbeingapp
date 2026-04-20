@@ -219,8 +219,8 @@ export default function ResearchExport() {
       const headers = [
         identifierHeader,
         'surname',
+        'student_id',
         identifierMode === 'full' ? 'email' : null,
-        identifierMode === 'full' ? 'student_id' : null,
         'sport',
         'program_year',
         'entry_date',
@@ -248,11 +248,11 @@ export default function ResearchExport() {
         const row: string[] = [
           `"${identifier}"`,
           `"${surname}"`,
+          `"${u.student_id || ''}"`,
         ]
 
         if (identifierMode === 'full') {
           row.push(`"${u.email || ''}"`)
-          row.push(`"${u.student_id || ''}"`)
         }
 
         row.push(`"${u.sport || ''}"`)

@@ -10,6 +10,7 @@ interface UserProfile {
   email: string
   student_id: string | null
   research_code: string | null
+  research_identifier: string | null
   sport: string | null
   program_year: number | null
   role: string
@@ -105,7 +106,7 @@ export default function ResearchExport() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, student_id, research_code, sport, program_year, role, research_participant')
+        .select('id, full_name, email, student_id, research_code, research_identifier, sport, program_year, role, research_participant')
         .order('full_name')
 
       if (error) throw error
@@ -219,7 +220,7 @@ export default function ResearchExport() {
       const headers = [
         identifierHeader,
         'surname',
-        'student_id',
+        'research_identifier',
         identifierMode === 'full' ? 'email' : null,
         'sport',
         'program_year',
@@ -248,7 +249,7 @@ export default function ResearchExport() {
         const row: string[] = [
           `"${identifier}"`,
           `"${surname}"`,
-          `"${u.student_id || ''}"`,
+          `"${u.research_identifier || ''}"`,
         ]
 
         if (identifierMode === 'full') {
@@ -488,6 +489,9 @@ export default function ResearchExport() {
                           </span>
                         </div>
                         <div className="text-xs text-gray-500 truncate">
+                          {u.research_identifier && (
+                            <span className="font-mono text-teal-700 mr-2">{u.research_identifier}</span>
+                          )}
                           {u.research_code && (
                             <span className="font-mono text-green-700 mr-2">{u.research_code}</span>
                           )}

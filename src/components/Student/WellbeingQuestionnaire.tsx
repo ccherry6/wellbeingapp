@@ -134,6 +134,7 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null)
   const [checkingSubmission, setCheckingSubmission] = useState(true)
 
   React.useEffect(() => {
@@ -181,13 +182,14 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
       try {
         const { data, error } = await supabase
           .from('wellness_entries')
-          .select('id')
+          .select('id, created_at')
           .eq('user_id', user.id)
           .eq('entry_date', today)
           .maybeSingle()
 
         if (!error && data) {
           setAlreadySubmitted(true)
+          setSubmittedAt(data.created_at ?? null)
         }
       } catch (err) {
         // Silently handle error
@@ -569,17 +571,30 @@ export function WellbeingQuestionnaire({ onSuccess, onSkip }: WellbeingQuestionn
             <p className="text-sm sm:text-base text-gray-600 mb-2">
               You've already completed your daily wellbeing check-in for today. Come back tomorrow!
             </p>
+            {submittedAt && (
+              <p className="text-xs text-gray-400 mb-4">
+                Submitted at {formatDateTimeAEST(submittedAt)}
+              </p>
+            )}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 max-w-md mx-auto">
               <p className="text-xs text-blue-800">
                 <strong>Remember:</strong> You can always skip a day - participation is voluntary! Your wellbeing matters, and checking in is here to support you.
               </p>
             </div>
-            <button
-              onClick={() => onSuccess?.()}
-              className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium"
-            >
-              View Your Progress
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => onSuccess?.()}
+                className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors font-medium"
+              >
+                View Your Progress
+              </button>
+              <button
+                onClick={() => setAlreadySubmitted(false)}
+                className="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+              >
+                Re-submit Check-in
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Flame, Award, TrendingUp, Calendar, Target, Star, X, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, Activity } from 'lucide-react'
+import { Flame, Award, TrendingUp, Calendar, Target, Star, X, Moon, Zap, Dumbbell, Heart, Brain, Users, Trophy, MessageCircle, Activity, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { format, parseISO, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns'
 
@@ -40,6 +40,10 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedEntry, setSelectedEntry] = useState<WellnessEntryDetail | null>(null)
   const [loadingEntry, setLoadingEntry] = useState(false)
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
 
   useEffect(() => {
     fetchProgress()
@@ -176,28 +180,37 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
     return `Incredible! ${currentStreak} days in a row!`
   }
 
+  const getViewedMonthCheckIns = () => {
+    const monthStart = startOfMonth(calendarMonth)
+    const monthEnd = endOfMonth(calendarMonth)
+    return entries.filter(entry => {
+      const d = parseISO(entry.entry_date)
+      return isWithinInterval(d, { start: monthStart, end: monthEnd })
+    }).length
+  }
+
   const getCompletionRate = () => {
     const now = new Date()
-    const daysInMonth = endOfMonth(now).getDate()
-    const dayOfMonth = now.getDate()
+    const isCurrentMonth =
+      calendarMonth.getFullYear() === now.getFullYear() &&
+      calendarMonth.getMonth() === now.getMonth()
 
-    const expectedCheckIns = dayOfMonth
-    const rate = expectedCheckIns > 0 ? (thisMonthCheckIns / expectedCheckIns) * 100 : 0
+    const viewedMonthCheckIns = getViewedMonthCheckIns()
+    const expectedCheckIns = isCurrentMonth
+      ? now.getDate()
+      : endOfMonth(calendarMonth).getDate()
+
+    const rate = expectedCheckIns > 0 ? (viewedMonthCheckIns / expectedCheckIns) * 100 : 0
     return Math.min(100, Math.round(rate))
   }
 
   const getMonthlyCalendar = () => {
     const now = new Date()
-    const monthStart = startOfMonth(now)
-    const monthEnd = endOfMonth(now)
+    const monthStart = startOfMonth(calendarMonth)
+    const monthEnd = endOfMonth(calendarMonth)
 
-    // Calculate which day of week the month starts on (0 = Sunday)
     const startDayOfWeek = monthStart.getDay()
-
-    // Create array of all days in the month
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-
-    // Add padding days at the start
     const paddingDays = Array(startDayOfWeek).fill(null)
 
     const entryDates = new Set(entries.map(e => e.entry_date))
@@ -210,6 +223,20 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
     }))
 
     return { paddingDays, calendarDays }
+  }
+
+  const goToPrevMonth = () => {
+    setCalendarMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+  }
+
+  const goToNextMonth = () => {
+    setCalendarMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+  }
+
+  const isCurrentMonth = () => {
+    const now = new Date()
+    return calendarMonth.getFullYear() === now.getFullYear() &&
+      calendarMonth.getMonth() === now.getMonth()
   }
 
   const achievements = [
@@ -238,7 +265,7 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
       unit: 'check-ins',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
-      message: `${getCompletionRate()}% completion rate`
+      message: `${Math.min(100, Math.round(new Date().getDate() > 0 ? (thisMonthCheckIns / new Date().getDate()) * 100 : 0))}% completion rate`
     },
     {
       icon: Star,
@@ -309,10 +336,27 @@ export function ProgressTracker({ userId }: ProgressTrackerProps) {
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center">
-            <Calendar className="w-5 h-5 mr-2" />
-            {format(new Date(), 'MMMM yyyy')}
-          </h3>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-gray-600" />
+            <button
+              onClick={goToPrevMonth}
+              className="p-1 rounded hover:bg-gray-100 transition-colors"
+              title="Previous month"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <h3 className="text-lg font-bold text-gray-900 w-36 text-center">
+              {format(calendarMonth, 'MMMM yyyy')}
+            </h3>
+            <button
+              onClick={goToNextMonth}
+              disabled={isCurrentMonth()}
+              className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Next month"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Completion Rate</p>
             <p className="text-2xl font-bold text-blue-600">{completionRate}%</p>

@@ -16,9 +16,9 @@ import {
   Bar,
   Legend
 } from 'recharts'
-import { TrendingUp, Users, Calendar, Target, Eye, EyeOff } from 'lucide-react'
+import { TrendingUp, Users, Calendar, Target, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { format, subDays } from 'date-fns'
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isAfter, startOfDay } from 'date-fns'
 
 interface StudentData {
   id: string
@@ -52,13 +52,18 @@ export function AnalyticsCharts() {
   const [selectedMetric, setSelectedMetric] = useState('mood')
   const [selectedStudent, setSelectedStudent] = useState<string>('')
   const [selectedView, setSelectedView] = useState<'trends' | 'radar' | 'comparison' | 'individual' | 'biometrics'>('trends')
-  const [timeRange, setTimeRange] = useState(7)
+  const [weekStart, setWeekStart] = useState<Date>(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  )
   const [loading, setLoading] = useState(true)
   const [visibleStudents, setVisibleStudents] = useState<Set<string>>(new Set())
 
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+  const isCurrentWeek = !isAfter(startOfDay(new Date()), weekEnd)
+
   useEffect(() => {
     fetchStudentsAndData()
-  }, [timeRange])
+  }, [weekStart])
 
   // Debug logging to check data flow
   useEffect(() => {
@@ -115,9 +120,7 @@ export function AnalyticsCharts() {
       setStudents(studentsWithColors)
       setVisibleStudents(new Set(studentsWithColors.slice(0, 5).map(s => s.id))) // Show first 5 by default
 
-      // Fetch wellness data for all students
-      const startDate = subDays(new Date(), timeRange).toISOString()
-      
+      // Fetch wellness data for all students within selected week
       const { data: wellnessData, error: wellnessError } = await supabase
         .from('wellness_entries')
         .select(`
@@ -132,8 +135,9 @@ export function AnalyticsCharts() {
           )
         `)
         .in('profiles.id', usersWithWellnessData.map(u => u.id))
-        .gte('created_at', startDate)
-        .order('created_at')
+        .gte('entry_date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('entry_date', format(weekEnd, 'yyyy-MM-dd'))
+        .order('entry_date')
 
       if (wellnessError) throw wellnessError
       
@@ -144,7 +148,7 @@ export function AnalyticsCharts() {
       const groupedByDate: { [key: string]: { [studentId: string]: any } } = {}
       
       wellnessData?.forEach(entry => {
-        const date = format(new Date(entry.created_at), 'MMM dd')
+        const date = format(new Date(entry.entry_date + 'T00:00:00'), 'EEE dd')
         if (!groupedByDate[date]) {
           groupedByDate[date] = {}
         }
@@ -303,18 +307,36 @@ export function AnalyticsCharts() {
 
   return (
     <div id="analytics-charts" className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Analytics Dashboard</h2>
-        <div className="flex space-x-2">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(Number(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+        <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl px-3 py-2 shadow-sm">
+          <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+          <button
+            onClick={() => setWeekStart(w => subWeeks(w, 1))}
+            className="p-1 rounded hover:bg-gray-100 transition-colors"
+            title="Previous week"
           >
-            <option value={7}>Last 7 days</option>
-            <option value={14}>Last 14 days</option>
-            <option value={30}>Last 30 days</option>
-          </select>
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span className="text-sm font-medium text-gray-800 w-48 text-center">
+            {format(weekStart, 'dd MMM')} – {format(weekEnd, 'dd MMM yyyy')}
+          </span>
+          <button
+            onClick={() => setWeekStart(w => addWeeks(w, 1))}
+            disabled={isCurrentWeek}
+            className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Next week"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+          {!isCurrentWeek && (
+            <button
+              onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+              className="ml-1 text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
+            >
+              This week
+            </button>
+          )}
         </div>
       </div>
 

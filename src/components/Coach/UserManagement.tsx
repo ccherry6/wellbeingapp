@@ -245,7 +245,7 @@ export default function UserManagement() {
     try {
       const isParticipant = researchCode.trim() !== ''
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({
           research_code: researchCode.trim() || null,
@@ -253,8 +253,10 @@ export default function UserManagement() {
           research_notes: notes.trim() || null
         })
         .eq('id', userId)
+        .select('id')
 
       if (error) throw error
+      if (!data || data.length === 0) throw new Error('Update was blocked by database permissions. Please contact support.')
 
       setMessage({ type: 'success', text: 'Research code updated successfully' })
       loadUsers()

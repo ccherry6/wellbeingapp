@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar, TrendingUp, TrendingDown, Users, AlertTriangle, CheckCircle, Download } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { shareOrDownloadFile } from '../../lib/shareFile'
 
 interface WeeklySummaryData {
   weekStart: string
@@ -125,7 +126,7 @@ export default function WeeklySummary() {
     }
   }
 
-  const exportSummary = () => {
+  const exportSummary = async () => {
     if (!summary) return
 
     const report = `
@@ -156,15 +157,8 @@ ${summary.improvements.map(i => `- ${i}`).join('\n')}
 Generated: ${new Date().toLocaleString()}
     `.trim()
 
-    // Use data URI for better mobile compatibility
-    const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(report)
-    const a = document.createElement('a')
-    a.href = dataUri
-    a.download = `weekly-summary-${summary.weekStart}-${summary.weekEnd}.txt`
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    const filename = `weekly-summary-${summary.weekStart}-${summary.weekEnd}.txt`
+    await shareOrDownloadFile(report, filename, 'text/plain')
   }
 
   const getScoreColor = (score: number, isInverse: boolean = false) => {

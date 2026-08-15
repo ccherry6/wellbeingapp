@@ -18,6 +18,7 @@ import { BDCLogo } from '../BDCLogo'
 import { formatDateAEST } from '../../lib/dateUtils'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { shareOrDownloadFile, shareOrDownloadDataUri } from '../../lib/shareFile'
 
 interface Student {
   id: string
@@ -128,14 +129,7 @@ export function CoachDashboard() {
       ].join('\n')
 
       // Use data URI for better mobile compatibility
-      const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
-      const a = document.createElement('a')
-      a.href = dataUri
-      a.download = `wellbeing-data-${new Date().toISOString().split('T')[0]}.csv`
-      a.style.display = 'none'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      await shareOrDownloadFile(csvContent, `wellbeing-data-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv')
     } catch (error) {
       alert('Error exporting data. Please try again.')
     }
@@ -177,13 +171,7 @@ export function CoachDashboard() {
 
       // Use data URI approach for better mobile compatibility
       const pdfOutput = pdf.output('datauristring')
-      const link = document.createElement('a')
-      link.href = pdfOutput
-      link.download = `wellbeing-charts-${new Date().toISOString().split('T')[0]}.pdf`
-      link.style.display = 'none'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      await shareOrDownloadDataUri(pdfOutput, `wellbeing-charts-${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (error) {
       alert('Error exporting charts. Please try again.')
     }
@@ -207,10 +195,8 @@ export function CoachDashboard() {
         removeContainer: true
       })
       
-      const link = document.createElement('a')
-      link.download = `wellbeing-charts-${new Date().toISOString().split('T')[0]}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
+      const imgData = canvas.toDataURL('image/png')
+      await shareOrDownloadDataUri(imgData, `wellbeing-charts-${new Date().toISOString().split('T')[0]}.png`)
     } catch (error) {
       alert('Error exporting charts. Please try again.')
     }

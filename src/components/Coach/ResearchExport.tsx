@@ -3,6 +3,7 @@ import { Download, FileText, Calendar, Filter, CheckCircle, AlertCircle, Microsc
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { formatDateAEST } from '../../lib/dateUtils'
+import { shareOrDownloadFile } from '../../lib/shareFile'
 
 interface UserProfile {
   id: string
@@ -279,15 +280,8 @@ export default function ResearchExport() {
       })
 
       const csvContent = csvRows.join('\n')
-      const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
-      const link = document.createElement('a')
       const filename = `wellbeing_export_${startDate}_to_${endDate}_${new Date().getTime()}.csv`
-      link.setAttribute('href', dataUri)
-      link.setAttribute('download', filename)
-      link.style.display = 'none'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      await shareOrDownloadFile(csvContent, filename, 'text/csv')
 
       const researchCodes = selectedUsers
         .map(id => userMap.get(id)?.research_code || userMap.get(id)?.full_name || id)
@@ -307,7 +301,7 @@ export default function ResearchExport() {
 
       setMessage({
         type: 'success',
-        text: `Successfully exported ${entries.length} records from ${selectedUsers.length} users`
+        text: `Successfully exported ${entries.length} records from ${selectedUsers.length} users. Check your Files app or share destination.`
       })
 
       loadExportHistory()
